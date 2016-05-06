@@ -1,0 +1,29 @@
+{
+  "name": "bolt-server",
+  "description": "Bolt NodeJs Server",
+  "author": "Whitebolt <hello@whitebolt.net>",
+  "contributors": [
+    {
+      "name": "Stephen Simpson",
+      "email": "stephen@whitebolt.net"
+    },
+    {
+      "name": "Kristjan Allikas",
+      "email": "kris@whitebolt.net"
+    }
+  ],
+  "version": "0.0.1",
+  "private": false,
+  "keywords": [
+    "Server",
+    "CMS"
+  ],
+  "dependencies": {},
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@aaron.whitebolt:bolt/server.git"
+  },
+  "license": "SEE LICENSE IN LICENSE.md",
+  "devDependencies": {}
+}
