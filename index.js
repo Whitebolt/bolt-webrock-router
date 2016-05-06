@@ -23,11 +23,22 @@ function controllerLoader(app) {
 
   app.all(/^\/api\/.*/, (req, res, next) => {
     let path = req.path.replace(/^\/api\//, '').split('/');
-    if (path.length && (path.length > 1)) {
+    if (path.length) {
       let controller = path[0];
-      let method = path[1];
+      if (!app.controllers[controller]) {
+        next();
+      }
 
-      app.controllers[controller][method](req, res, next);
+      let method = ((path.length === 1) ?
+        app.controllers[controller].default : 
+        path[1]
+      );
+      
+      if (app.controllers[controller][method]) {
+        app.controllers[controller][method](req, res, next);
+      } else {
+        next();
+      }
     }
   });
 
