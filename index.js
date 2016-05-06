@@ -5,6 +5,7 @@ const express = require('express');
 const app = express();
 const Promise = require('bluebird');
 const MongoClient = require('mongodb').MongoClient;
+const mysql = require('mysql');
 const ObjectId = require('mongodb').ObjectID;
 const ejs = require('ejs');
 app.config = require('./server.json');
@@ -42,15 +43,35 @@ function databaseLoader(app) {
   let dbPromises = [];
 
   Object.keys(app.config.databases).forEach(dbName => {
-    let conn = app.config.databases[dbName];
+    let options = app.config.databases[dbName];
 
-    dbPromises.push(mongoConnect(conn).then(database => {
-      app.dbs[dbName] = database;
-      return database;
-    }));
+    if (options.type === 'mongodb') {
+      dbPromises.push(mongoConnect(createMongoUrl(options)).then(database => {
+        app.dbs[dbName] = database;
+        return database;
+      }));
+    } else if (options.type === 'mysql') {
+      dbPromises.push(new Promise(function(resolve, reject) {
+        let database = mysql.createConnection({
+          host     : options.server,
+          user     : options.username,
+          password : options.password,
+          database : options.database
+        });
+
+        database.connect();
+        app.dbs[dbName] = database;
+        resolve(database);
+      }));
+      
+    }
   });
 
   return Promise.all(dbPromises);
+}
+
+function createMongoUrl(options) {
+  return 'mongodb://' + options.server + ':' + options.port + '/' + options.database;
 }
 
 function controllerLoader(app) {

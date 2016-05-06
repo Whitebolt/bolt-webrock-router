@@ -5,9 +5,21 @@
     "C:/bolt/global/"
   ],
   "secret": "98mrsutbhsrt958q74hm598urwqhbmsoifnb45bhwrthstghSDFG#%¤GSFDBW¤%BS",
-  "mongoDbUrl": "mongodb://localhost:27017/test",
   "databases": {
-    "main": "mongodb://localhost:27017/test"
+    "main": {
+      "type": "mongodb",
+      "server": "localhost",
+      "port": 27017,
+      "database": "test"
+    },
+    "sql": {
+      "type": "mysql",
+      "server": "soloman.whitebolt",
+      "port": 3306,
+      "database": "whitebolt",
+      "username": "root",
+      "password": "H!pp0potto1999"
+    }     
   },
   "templates": {
     "default": "index"

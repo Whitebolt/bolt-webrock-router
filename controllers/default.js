@@ -1,7 +1,5 @@
 'use strict';
 
-
-
 module.exports = {
   getPage: function(req, res, next) {
     console.log('GET PAGE!');
