@@ -18,7 +18,9 @@
     "Server",
     "CMS"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "express": "^4.13.4"
+  },
   "main": "./index.js",
   "repository": {
     "type": "git",
