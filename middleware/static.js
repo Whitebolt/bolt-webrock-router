@@ -3,8 +3,7 @@
 const serve = require('serve-static');
 
 module.exports = function(app) {
-  app.use(serve(
-    app.config.root, 
-    {}
-  ));
+  app.config.root.forEach(rootDir => {
+    app.use(serve(rootDir, {}));
+  });
 };
