@@ -5,6 +5,9 @@
   "databases": {
     "main": "mongodb://localhost:27017/test"
   },
+  "templates": {
+    "default": "index"
+  },
   "middleware": ["session"],
   "controllers": {
     "load": ["default", "test"],

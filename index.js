@@ -1,42 +1,41 @@
 'use strict';
 
+const fs = require('fs');
 const express = require('express');
 const app = express();
 const Promise = require('bluebird');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require('mongodb').ObjectID;
+const ejs = require('ejs');
 app.config = require('./server.json');
 
 
 
-loadDatabases(app).then(() => {
+databaseLoader(app).then(() => {
   middlewareLoader(app);
   controllerLoader(app);
+  templateLoader(app);
 
   app.listen(app.config.port, () => {
     console.log('Express Listening on port ' + app.config.port);
   });
 });
 
-/*mongoConnect(app.config.mongoDbUrl).then(database => {
-  console.log("MongoDB Connected to server: " + app.config.mongoDbUrl);
-  app.db = database;
+function loadTextFile(filename) {
+  return fs.readFileSync(filename, 'utf8');
+}
 
-  return database;
-}).then(database => {
-  
-});*/
+function templateLoader(app) {
+  app.templates = app.templats || {};
 
-//MongoClient.connect(app.config.mongoDbUrl, function(err, database) {
-  //assert.equal(null, err);
- 
-//});
-  
-/*app.get('/', (req, res) => {
-  res.send('Hello World on port ' + app.config.port);
-});*/
+  Object.keys(app.config.templates).forEach(templateName => {
+    let filename = app.config.templates[templateName] + '.ejs';
+    let template = loadTextFile('./templates/' + filename);
+    app.templates[templateName] = ejs.compile(template, {});
+  });
+}
 
-function loadDatabases(app) {
+function databaseLoader(app) {
   const mongoConnect = Promise.promisify(MongoClient.connect);
   app.dbs = app.dbs || {};
 

@@ -1,21 +1,19 @@
 'use strict';
 
+
+
 module.exports = {
   getPage: function(req, res, next) {
     console.log('GET PAGE!');
 
-    let title, content;
-
     req.app.dbs['main'].collection('page').findOne({'path':req.path}, function(err, doc) {
         if(doc) {
-          console.log(doc);
-          title = doc.title;
-          content = doc.content;
-
-          console.log(title);
-          console.log(content);
-
-          res.send('<h1>' + title + '</h1><p>' + content + '</p>');
+          let template = (doc.template ?
+            req.app.templates[doc.template] :
+            req.app.templates['default']
+          );
+         
+          res.send(template(doc));
           res.end();
         } else {
           next();
