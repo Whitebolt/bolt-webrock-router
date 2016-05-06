@@ -6,7 +6,9 @@ module.exports = {
   getPage: function(req, res, next) {
     console.log('GET PAGE!');
 
-    req.app.dbs['main'].collection('page').findOne({'path':req.path}, function(err, doc) {
+    req.app.dbs['main'].collection('page').findOne({
+      'path': req.path.replace(/\/$/, '')
+    }, function(err, doc) {
         if(doc) {
           let template = (doc.template ?
             req.app.templates[doc.template] :

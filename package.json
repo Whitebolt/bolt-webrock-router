@@ -23,7 +23,8 @@
     "ejs": "^2.4.1",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
-    "mongodb": "^2.1.18"
+    "mongodb": "^2.1.18",
+    "serve-static": "^1.10.2"
   },
   "main": "./index.js",
   "repository": {

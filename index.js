@@ -59,34 +59,35 @@ function controllerLoader(app) {
     app.controllers[controller] = require('./controllers/' + controller);
   });
 
-  app.all(/^\/api\/.*/, (req, res, next) => {
+  app.all(/\/.*/, (req, res, next) => {
     req.app = app;
-    let path = req.path.replace(/^\/api\//, '').split('/');
-    if (path.length) {
-      let controller = path[0];
-      if (!app.controllers[controller]) {
-        next();
-      }
+    let path = req.path.replace(/^\//, '').replace(/\/$/, '').split('/');
+    let controller = app.config.controllers.default.controller;
+    let method = app.config.controllers.default.method;
 
-      let method = ((path.length === 1) ?
-        app.controllers[controller].default : 
-        path[1]
-      );
-      
+    if (path.length) {
+      if (app.controllers[path[0]]) {
+        let _method = ((path.length === 1) ?
+          app.controllers[path[0]].default : 
+          path[1]
+        );
+
+        if (app.controllers[path[0]][_method]) {
+          controller = path[0];
+          method = _method;
+        }
+      }
+    }
+
+    if (controller && method) {
       if (app.controllers[controller][method]) {
         app.controllers[controller][method](req, res, next);
       } else {
         next();
       }
+    } else {
+      next();
     }
-  });
-
-  app.all(/\/.*/, (req, res, next) => {
-    req.app = app;
-    let controller = app.config.controllers.default.controller;
-    let method = app.config.controllers.default.method;
-
-    app.controllers[controller][method](req, res, next);
   });
 }
 
