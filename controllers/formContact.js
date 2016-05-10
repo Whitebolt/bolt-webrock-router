@@ -39,29 +39,23 @@ function getMenu(menuName, db, mainDoc) {
 
 let exported = {
   getPage: function(req, res, next) {
+    let doc = {title: 'Contact Form', path: req.path};
 
-    req.app.db.collection('pages').findOne({
-      'path': getPath(req)
-    }).then(doc => {
-      if (!doc) {
-        throw "Document not found in Database";
-      }
+    req.template = (doc.template ?
+      req.app.templates[doc.template] :
+      req.app.templates['default']
+    );
 
-      req.template = (doc.template ?
-        req.app.templates[doc.template] :
-        req.app.templates['default']
-      );
-
-      return getMenu("main", req.app.db, doc);
-
-    }).then(doc => {
-      doc.content = req.app.templates.components.content(doc);
+    getMenu("main", req.app.db, doc).then(doc => {
+      doc.content = req.app.templates.components.formContact(doc);
+      console.log(doc);
       res.send(req.template(doc));
       res.end();
     }, err => {
-      console.log(err);
       next();
     });
+   
+    
   }
 };
 

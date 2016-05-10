@@ -1,0 +1,6 @@
+{
+  "all": "index",
+  "components": {
+    "content": "components/formContact"
+  }
+}
