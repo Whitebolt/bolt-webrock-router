@@ -5,8 +5,7 @@ const app = express();
 
 const loaders = require('./lib');
 
-app.config = require('./server.json');
-
+app.config = require(process.argv[2]);
 
 loaders.databases.load(app).then(() => {
 	loaders.middleware.load(app);
