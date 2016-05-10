@@ -39,7 +39,13 @@ function getMenu(menuName, db, mainDoc) {
 
 let exported = {
   getPage: function(req, res, next) {
-    console.log('GET ' + req.path);
+
+    let ip = req.headers['x-forwarded-for'] || 
+     req.connection.remoteAddress || 
+     req.socket.remoteAddress ||
+     req.connection.socket.remoteAddress;
+    
+    console.log(Date().toLocaleString() + ' GET ' + ip + ' ' + req.path);
 
     req.app.db.collection('pages').findOne({
       'path': getPath(req)
@@ -56,7 +62,6 @@ let exported = {
       return getMenu("main", req.app.db, doc);
 
     }).then(doc => {
-      console.log(doc);
       res.send(req.template(doc));
       res.end();
     }, err => {
