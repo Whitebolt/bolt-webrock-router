@@ -1,4 +1,5 @@
 'use strict';
+
 require('colors');
 console.log('\n'+'[' + ' server init '.green + '] ' +Date().toLocaleString());
 
@@ -7,30 +8,30 @@ const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 
 require('require-extra')([
-	'express', './lib/loaders', process.argv[2]
-]).spread((express, loaders, config) => {
+	'express',
+	'./lib/bolt/files',
+	'./lib/loaders/bolt',
+	process.argv[2]
+]).spread((express, boltFs, boltLoader, config) => {
 	const app = express();
+	const loaders = {};
+
 	app.config = config;
 	app.config.template = app.config.template || 'index';
+	app.middleware = app.middleware || {};
+	app.templates = app.templates || {};
 
-	/**
-	 * @todo These should all load at once instead of in sequence.
-	 */
-	loaders.bolt.load(app.config.root).then(bolt => {
-		Object.assign(global, {bolt, express});
-		return bolt;
-	}).then(() => {
+	boltLoader.load(app.config.root).then(bolt => {
+		return Object.assign(global, {bolt, express});
+	}).then(() => boltFs.importDirectory('./lib/loaders', loaders)).then(() => {
 		return loaders.databases.load(app);
 	}).then(() => {
-		app.middleware = app.middleware || {};
-		return loaders.middleware.load(app, app.config.root, app.middleware);
-	}).then(() => {
-		return loaders.routes.load(app);
-	}).then(() => {
-		return loaders.components.load(app, loaders, app.config.root);
-	}).then(() => {
-		app.templates = app.templates || {};
-		return loaders.templates.load(app.config.root, app.templates);
+		return Promise.all([
+			loaders.middleware.load(app, app.config.root, app.middleware),
+			loaders.routes.load(app),
+			loaders.components.load(app, loaders, app.config.root),
+			loaders.templates.load(app.config.root, app.templates)
+		]);
 	}).then(() => {
 		app.listen(app.config.port, () => {
 			console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
@@ -41,5 +42,4 @@ require('require-extra')([
 			});
 		});
 	});
-	//loaders.databases.load(app)
 });
