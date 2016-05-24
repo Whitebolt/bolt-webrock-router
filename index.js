@@ -7,10 +7,8 @@ const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 
 require('require-extra')([
-	'./lib/bolt/', 'express', './lib/loaders', process.argv[2]
-]).spread((bolt, express, loaders, config) => {
-	Object.assign(global, {bolt, express});
-
+	'express', './lib/loaders', process.argv[2]
+]).spread((express, loaders, config) => {
 	const app = express();
 	app.config = config;
 	app.config.template = app.config.template || 'index';
@@ -18,7 +16,12 @@ require('require-extra')([
 	/**
 	 * @todo These should all load at once instead of in sequence.
 	 */
-	loaders.databases.load(app).then(() => {
+	loaders.bolt.load(app.config.root).then(bolt => {
+		Object.assign(global, {bolt, express});
+		return bolt;
+	}).then(() => {
+		return loaders.databases.load(app);
+	}).then(() => {
 		app.middleware = app.middleware || {};
 		return loaders.middleware.load(app, app.config.root, app.middleware);
 	}).then(() => {
@@ -38,4 +41,5 @@ require('require-extra')([
 			});
 		});
 	});
+	//loaders.databases.load(app)
 });
