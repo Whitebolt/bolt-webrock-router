@@ -25,10 +25,10 @@ require('require-extra')([
 		return loaders.databases.load(app);
 	}).then(() => {
 		return Promise.all([
-			loaders.middleware.load(app, app.config.root),
+			loaders.middleware.load(app),
 			loaders.routes.load(app),
-			loaders.components.load(app, app.config.root, loaders),
-			loaders.templates.load(app, app.config.root)
+			loaders.components.load(app, loaders),
+			loaders.templates.load(app)
 		]);
 	}).then(() => {
 		app.listen(app.config.port, () => {
