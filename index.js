@@ -1,6 +1,8 @@
 'use strict';
-
 require('colors');
+console.log('\n'+'[' + ' server init '.green + '] ' +Date().toLocaleString());
+
+
 const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 
@@ -32,7 +34,7 @@ require('require-extra')('./lib/bolt/').then(bolt => {
       console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
       readFile('./welcome.txt', 'utf-8').then(welcome => {
         console.log(welcome);
-        console.log('\n'+Date().toLocaleString());
+        console.log('\n'+'[' + ' load complete '.green + '] ' +Date().toLocaleString());
 
       });      
     });
