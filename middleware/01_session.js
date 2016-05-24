@@ -8,6 +8,8 @@ module.exports = function(app) {
     secret: app.config.secret,
     store: new MongoStore({
       db: app.dbs.main
-    })
+    }),
+    resave: true,
+    saveUninitialized: true
   }));
 };
