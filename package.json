@@ -26,6 +26,7 @@
     "express-session": "^1.13.0",
     "mongodb": "^2.1.18",
     "mysql": "^2.10.2",
+    "require-extra": "^0.2.3",
     "serve-static": "^1.10.2"
   },
   "main": "./index.js",

@@ -38,8 +38,7 @@ function getMenu(menuName, db, mainDoc) {
 }
 
 let exported = {
-  getPage: function(req, res, next) {
-
+  index: function(req, res, next) {
     req.app.db.collection('pages').findOne({
       'path': getPath(req)
     }).then(doc => {
@@ -47,16 +46,15 @@ let exported = {
         throw "Document not found in Database";
       }
 
-      req.template = (doc.template ?
-        req.app.templates[doc.template] :
-        req.app.templates['default']
+      req.template = (doc.view ?
+        req.app.templates[req.app.config.template][doc.view] :
+        req.app.templates[req.app.config.template].index
       );
-
+      
       return getMenu("main", req.app.db, doc);
-
     }).then(doc => {
-      doc.content = req.app.templates.components.content(doc);
-      res.send(req.template(doc));
+      //doc.content = req.app.templates.components.content(doc);
+      res.send(req.template(doc, req));
       res.end();
     }, err => {
       console.log(err);
