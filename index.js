@@ -23,8 +23,7 @@ require('require-extra')('./lib/bolt/').then(bolt => {
   }).then(() => {
     return loaders.routes.load(app);
   }).then(() => {
-    app.controllers = app.controllers || {};
-    return loaders.controllers.load(app.config.root, app.controllers);
+    return loaders.components.load(app, loaders, app.config.root);
   }).then(() => {
     app.templates = app.templates || {};
     return loaders.templates.load(app.config.root, app.templates);
