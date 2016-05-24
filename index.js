@@ -18,8 +18,6 @@ require('require-extra')([
 
 	app.config = config;
 	app.config.template = app.config.template || 'index';
-	app.middleware = app.middleware || {};
-	app.templates = app.templates || {};
 
 	boltLoader.load(app.config.root).then(bolt => {
 		return Object.assign(global, {bolt, express});
@@ -27,10 +25,10 @@ require('require-extra')([
 		return loaders.databases.load(app);
 	}).then(() => {
 		return Promise.all([
-			loaders.middleware.load(app, app.config.root, app.middleware),
+			loaders.middleware.load(app, app.config.root),
 			loaders.routes.load(app),
-			loaders.components.load(app, loaders, app.config.root),
-			loaders.templates.load(app.config.root, app.templates)
+			loaders.components.load(app, app.config.root, loaders),
+			loaders.templates.load(app, app.config.root)
 		]);
 	}).then(() => {
 		app.listen(app.config.port, () => {
