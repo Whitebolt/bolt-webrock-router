@@ -1,18 +1,18 @@
 'use strict';
 
 const Promise = require('bluebird');
+const requireX = require('require-extra');
 const ascii = require('ascii-art');
 ascii.Figlet.fontPath = './console_fonts/';
 
 
 
-require('require-extra')([
+requireX([
   'express',
-  './lib/bolt/files',
   './lib/loaders/bolt',
   './lib/loaders/config',
   'colors'
-]).spread((express, boltFs, boltLoader, configLoader, colour) => {
+]).spread((express, boltLoader, configLoader, colour) => {
   console.log('\n'+'[' + colour.green(' server init ') + '] ' +Date().toLocaleString());
 
   const app = express();
@@ -22,7 +22,7 @@ require('require-extra')([
     return boltLoader.load(app.config.root);
   }).then(bolt => {
     return Object.assign(global, {bolt, express});
-  }).then(() => boltFs.importDirectory('./lib/loaders', loaders)).then(() => {
+  }).then(() => requireX.importDirectory('./lib/loaders', {imports: loaders})).then(() => {
     return loaders.databases.load(app);
   }).then(() => {
     return Promise.all([
