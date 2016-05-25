@@ -1,1 +1,1 @@
-All rights reserved by Whitebolt LTD
+All rights reserved ® by Whitebolt LTD

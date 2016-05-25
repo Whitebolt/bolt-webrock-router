@@ -1,11 +1,13 @@
 'use strict';
 
-require('colors');
-console.log('\n'+'[' + ' server init '.green + '] ' +Date().toLocaleString());
-
-
+const colour = require('colors');
 const Promise = require('bluebird');
+const ascii = require('ascii-art');
 const readFile = Promise.promisify(require('fs').readFile);
+ascii.Figlet.fontPath = './console_fonts/';
+
+console.log('\n'+'[' + colour.green(' server init ') + '] ' +Date().toLocaleString());
+
 
 require('require-extra')([
   'express',
@@ -33,11 +35,14 @@ require('require-extra')([
   }).then(() => {
     app.listen(app.config.port, () => {
       console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
-      readFile('./welcome.txt', 'utf-8').then(welcome => {
-        console.log(welcome);
-        console.log('\n'+'[' + ' load complete '.green + '] ' +Date().toLocaleString());
-
-      });
+      ascii
+        .font('Bolt', 'big', 'bright_blue+bold')
+        .font('Server', 'big', 'bright_cyan+bold')
+        .font(' v3.0', 'big', 'white+bold', banner => {
+          readFile('./LICENCE.md', 'utf-8').then(licence => {
+            console.log(banner + '\n ' + colour.white(licence) + '\n\n');
+          });
+        });
     });
   });
 });

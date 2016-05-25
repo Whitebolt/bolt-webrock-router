@@ -19,6 +19,7 @@
     "CMS"
   ],
   "dependencies": {
+    "ascii-art": "0.0.2-alpha",
     "bluebird": "^3.3.5",
     "colors": "^1.1.2",
     "connect-mongo": "^1.1.0",
