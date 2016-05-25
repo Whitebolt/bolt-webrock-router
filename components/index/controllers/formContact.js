@@ -42,8 +42,8 @@ let exported = {
     let doc = {title: 'Contact Form', path: req.path};
 
     req.template = (doc.template ?
-      req.app.templates[doc.template] :
-      req.app.templates['default']
+        req.app.templates[doc.template] :
+        req.app.templates['default']
     );
 
     getMenu("main", req.app.db, doc).then(doc => {
@@ -54,8 +54,8 @@ let exported = {
     }, err => {
       next();
     });
-   
-    
+
+
   }
 };
 
