@@ -35,9 +35,9 @@ requireX([
     app.listen(app.config.port, () => {
       console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
       ascii
-        .font(bolt.titleCase(app.config.name.split('-').shift()), 'big', 'bright_blue+bold')
-        .font(bolt.titleCase(app.config.name.split('-').slice(1).join(' ')), 'big', 'bright_cyan+bold')
-        .font(' v' + app.config.version, 'big', 'white+bold', banner => {
+        .font(bolt.startCase(app.config.package.name.split('-').shift()), 'big', 'bright_blue+bold')
+        .font(bolt.startCase(app.config.package.name.split('-').slice(1).join(' ')), 'big', 'bright_cyan+bold')
+        .font(' v' + app.config.package.version, 'big', 'white+bold', banner => {
           console.log(banner + '\n ' + colour.white(app.config.license) + '\n\n');
         });
     });
