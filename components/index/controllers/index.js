@@ -47,14 +47,17 @@ let exported = {
       }
 
       req.template = (doc.view ?
-        req.app.templates[req.app.config.template][doc.view] :
-        req.app.templates[req.app.config.template].index
+        req.app.templates[doc.view] :
+        req.app.templates.index
       );
+      req.doc = doc;
+
+      //bolt.runControllers(req, res, function() {});
       
       return getMenu("main", req.app.db, doc);
     }).then(doc => {
       //doc.content = req.app.templates.components.content(doc);
-      res.send(req.template(doc, req));
+      res.send(req.template.viewCompiled(req.doc, req));
       res.end();
     }, err => {
       console.log(err);

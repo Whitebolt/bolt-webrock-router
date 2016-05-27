@@ -25,6 +25,7 @@
     "ejs": "^2.4.1",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
+    "lodash": "^4.13.1",
     "mongodb": "^2.1.18",
     "mysql": "^2.10.2",
     "require-extra": "^0.2.3",

@@ -28,7 +28,12 @@ require('require-extra')('./lib/bolt/').then(bolt => {
     return loaders.components.load(app, loaders, app.config.root);
   }).then(() => {
     app.templates = app.templates || {};
-    return loaders.templates.load(app.config.root, app.templates);
+    return loaders.templates.loadViewContent(app.config.root, app.templates);
+  }).then(() => {
+    app.templates = app.templates || {};
+    return loaders.templates.load(app.config.root, app.templates, app.config.template);
+  }).then(() => {
+    return loaders.templates.compileAllViews(app);
   }).then(() => {
     app.listen(app.config.port, () => {
       console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
