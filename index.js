@@ -20,11 +20,13 @@ require('./lib/').then(() => {
 }).then(app => {
   return loaders.component.load(app, loaders, app.config.root);
 }).then(app => {
+  return loaders.template.load(app);
+/*}).then(app => {
   return loaders.template.loadViewContent(app.config.root, app.templates).then(() => app);
 }).then(app => {
   return loaders.template.load(app.config.root, app.templates, app.config.template).then(() => app);
 }).then(app => {
-  return loaders.template.compileAllViews(app);
+  return loaders.template.compileAllViews(app);*/
 }).then(app => {
   app.listen(app.config.port, () => {
     console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
