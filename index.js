@@ -4,25 +4,26 @@ const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 
 require('./lib/').then(() => {
-  return bolt.require('./lib/loaders');
+  return bolt.require.importDirectory('./lib/loaders/');
 }).then(loaders => {
   /**
    * @todo These should all load at once instead of in sequence.
    */
+
   loaders.app.load(process.argv[2]).then(app => {
-    return loaders.databases.load(app);
+    return loaders.database.load(app);
   }).then(app => {
     return loaders.middleware.load(app, app.config.root, app.middleware);
   }).then(app => {
-    return loaders.routes.load(app);
+    return loaders.route.load(app);
   }).then(app => {
-    return loaders.components.load(app, loaders, app.config.root);
+    return loaders.component.load(app, loaders, app.config.root);
   }).then(app => {
-    return loaders.templates.loadViewContent(app.config.root, app.templates).then(() => app);
+    return loaders.template.loadViewContent(app.config.root, app.templates).then(() => app);
   }).then(app => {
-    return loaders.templates.load(app.config.root, app.templates, app.config.template).then(() => app);
+    return loaders.template.load(app.config.root, app.templates, app.config.template).then(() => app);
   }).then(app => {
-    return loaders.templates.compileAllViews(app);
+    return loaders.template.compileAllViews(app);
   }).then(app => {
     app.listen(app.config.port, () => {
       console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
