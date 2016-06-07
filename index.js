@@ -1,7 +1,6 @@
 'use strict';
 
-const Promise = require('bluebird');
-const readFile = Promise.promisify(require('fs').readFile);
+
 const loaders = {};
 
 /**
@@ -15,16 +14,7 @@ require('./lib/')
   .then(app => loaders.route.load(app))
   .then(app => loaders.component.load(app, loaders, app.config.root))
   .then(app => loaders.template.load(app))
-  .then(app => {
-    app.listen(app.config.port, () => {
-      console.log('[' + ' listen '.green + '] ' + 'Bolt Server on port ' + app.config.port.toString().green + '\n\n');
-      readFile('./welcome.txt', 'utf-8').then(welcome => {
-        console.log(welcome);
-        console.log('\n'+'[' + ' load complete '.green + '] ' +Date().toLocaleString());
-
-      });
-  });
-});
+  .then(app => loaders.run(app));
 
 /*}).then(app => {
  return loaders.template.loadViewContent(app.config.root, app.templates).then(() => app);
