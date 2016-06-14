@@ -46,14 +46,11 @@ let exported = {
         throw "Document not found in Database";
       }
 
-      req.template = (doc.view ?
-        req.app.templates[doc.view] :
-        req.app.templates.index
-      );
+      let template = ((doc.view && req.app.templates[doc.view]) ? doc.view : 'index');
       req.doc = doc;
 
       return getMenu("main", req.app.db, doc)
-        .then(doc => req);
+        .then(doc => {return {template}});
     });
   }
 };
