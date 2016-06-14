@@ -2,12 +2,6 @@
 
 const Promise = require('bluebird');
 
-function getPath(req) {
-  let path = req.path.trim().replace(/\/$/, '');
-
-  return ((path === '') ? '/' : path);
-}
-
 function setActive(doc, items) {
   let itemSet = false;
   (items || []).forEach(item => {
@@ -37,9 +31,15 @@ function getMenu(menuName, db, mainDoc) {
   });
 }
 
+function getPath(req) {
+  let path = req.path.trim().replace(/\/$/, '');
+
+  return ((path === '') ? '/' : path);
+}
+
 let exported = {
-  index: function(req, res, next) {
-    req.app.db.collection('pages').findOne({
+  index: function(req, res) {
+    return req.app.db.collection('pages').findOne({
       'path': getPath(req)
     }).then(doc => {
       if (!doc) {
@@ -52,14 +52,8 @@ let exported = {
       );
       req.doc = doc;
 
-      return getMenu("main", req.app.db, doc);
-    }).then(doc => {
-      let output = req.app.applyTemplate(req.doc, req)
-      res.send(output);
-      res.end();
-    }, err => {
-      console.log(err);
-      next();
+      return getMenu("main", req.app.db, doc)
+        .then(doc => req);
     });
   }
 };
