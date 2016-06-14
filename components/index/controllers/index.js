@@ -38,7 +38,7 @@ function getPath(req) {
 }
 
 let exported = {
-  index: function(req, res) {
+  index: function(req) {
     return req.app.db.collection('pages').findOne({
       'path': getPath(req)
     }).then(doc => {
