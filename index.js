@@ -15,10 +15,3 @@ require('./lib/')
   .then(app => loaders.component.load(app, loaders, app.config.root))
   .then(app => loaders.template.load(app))
   .then(app => loaders.run(app));
-
-/*}).then(app => {
- return loaders.template.loadViewContent(app.config.root, app.templates).then(() => app);
- }).then(app => {
- return loaders.template.load(app.config.root, app.templates, app.config.template).then(() => app);
- }).then(app => {
- return loaders.template.compileAllViews(app);*/

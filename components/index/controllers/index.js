@@ -52,12 +52,10 @@ let exported = {
       );
       req.doc = doc;
 
-      //bolt.runControllers(req, res, function() {});
-      
       return getMenu("main", req.app.db, doc);
     }).then(doc => {
-      //doc.content = req.app.templates.components.content(doc);
-      res.send(req.template.viewCompiled(req.doc, req));
+      let output = req.app.applyTemplate(req.doc, req)
+      res.send(output);
       res.end();
     }, err => {
       console.log(err);
