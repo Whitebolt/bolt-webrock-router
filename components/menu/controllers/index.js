@@ -33,7 +33,11 @@ function getMenu(menuName, req) {
 let exported = {
   index: function(req) {
     req.doc = req.doc || {};
-    return getMenu("main", req);
+    console.log();
+
+    return getMenu("main", req).then(blah =>
+      req.app.components.menu.views.index.compiled(req.doc, req)
+    );
   }
 };
 
