@@ -1,4 +1,4 @@
 <% menu.items.forEach(function(item) { %>
 <li><a href="<%= item.path %>" class="<%= (item.active) ? 'active' : '' %>"><%= item.title %></a></li>
-    <%& item.ejs &%>
+    <%= item.ejs %>
 <% }) %>
