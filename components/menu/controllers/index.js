@@ -31,10 +31,10 @@ function getMenu(menuName, req) {
 }
 
 let exported = {
-  index: function(req) {
-    req.doc = req.doc || {};
-    return getMenu("main", req).then(blah =>
-      req.app.components.menu.views.index.compiled(req.doc, req)
+  index: function(config) {
+    let doc = config.doc || config.req.doc || {};
+    return getMenu("main", config.req).then(blah =>
+      config.req.app.components.menu.views.index.compiled(doc, config.req)
     );
   }
 };

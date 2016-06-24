@@ -9,7 +9,8 @@ function getPath(req) {
 }
 
 let exported = {
-  index: function(req) {
+  index: function(config) {
+    let req = config.req;
     return req.app.db.collection('pages').findOne({
       'path': getPath(req)
     }).then(doc => {

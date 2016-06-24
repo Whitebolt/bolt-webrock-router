@@ -22,7 +22,7 @@
     "bluebird": "^3.3.5",
     "colors": "^1.1.2",
     "connect-mongo": "^1.1.0",
-    "ejs": "git@github.com/ssimpo/ejs.git",
+    "ejs": "https://github.com/ssimpo/ejs",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
     "lodash": "^4.13.1",
