@@ -4,7 +4,15 @@ const Promise = module.parent.require("bluebird");
 
 function save(component) {
   let req = component.req;
-  console.log(1);
+  let doc = req.body;
+
+  console.log(doc);
+
+  req.app.db.collection('contactForms').save(doc);
+
+  
+
+  return Promise.resolve({});
 }
 
 let exported = {
