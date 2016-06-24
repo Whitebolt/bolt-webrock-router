@@ -1,5 +1,10 @@
 <%- view("content/index", doc, req) %>
 
+<% if (req.query.formSent) { %>
+<p>
+  <b>Thank You for getting in touch. We will be contact you shortly.</b>
+</p>  
+<% } else { %>
 <form method="post" action="/contactForm/save">
   <input type="text" name="subject" placeholder="Subject">
   <textarea name="message" placeholder="Your Message" rows="5"></textarea>
@@ -7,3 +12,4 @@
   <input type="text" name="phone" placeholder="Phone">
   <input type="submit" value="Send Message">
 </form>
+<% } %>

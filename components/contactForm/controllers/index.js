@@ -10,15 +10,20 @@ function save(component) {
 
   req.app.db.collection('contactForms').save(doc);
 
-  
+  bolt.sendEmail(req.app, {
+    from: '"Foo Boo" <hello@whitebolt.net>',
+    to: 'kris@whitebolt.net',
+    subject: doc.subject,
+    text: doc.message
+  });
 
-  return Promise.resolve({});
+  return Promise.resolve({redirect: "/contact?formSent=1"});
 }
 
 let exported = {
 	index: function(component) {
     let doc = component.doc || component.req.doc || {};
-    return component.view(doc._view || "contactForm/index", doc, component.req, component.parent);
+      return component.view(doc._view || "contactForm/index", doc, component.req, component.parent);
 	},
   save: save
 };
