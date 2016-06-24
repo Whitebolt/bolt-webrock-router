@@ -1,3 +1,4 @@
-<% doc.menu.items.forEach(function(item) { %>
+<% doc.menu.items.forEach(item => { %>
 <li><a href="<%= item.path %>" class="<%= (item.active) ? 'active' : '' %>"><%= item.title %></a></li>
+<%- this.view("menu/item", doc, req); %>
 <% }) %>
