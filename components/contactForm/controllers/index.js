@@ -6,16 +6,24 @@ function save(component) {
   let req = component.req;
   let doc = req.body;
 
-  console.log(doc);
-
   req.app.db.collection('contactForms').save(doc);
 
-  bolt.sendEmail(req.app, {
-    from: '"Foo Boo" <hello@whitebolt.net>',
-    to: 'kris@whitebolt.net',
-    subject: doc.subject,
-    text: doc.message
-  });
+  req.app.db.collection('pages').findOne(
+      { 'path': doc.path },
+      { '_componentSettings': true }
+    ).then(dbDoc => {
+      let email = req.app.config.email;
+      if (dbDoc && dbDoc._componentSettings && dbDoc._componentSettings.email) {
+        email = dbDoc._componentSettings.email;
+      }
+      
+      bolt.sendEmail(req.app, {
+        from: '"' + doc.name + '" <' + doc.email + '>',
+        to: email,
+        subject: doc.subject,
+        text: doc.message
+      });
+    });
 
   return Promise.resolve({redirect: "/contact?formSent=1"});
 }

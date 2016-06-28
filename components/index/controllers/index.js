@@ -2,17 +2,13 @@
 
 const Promise = require('bluebird');
 
-function getPath(req) {
-  let path = req.path.trim().replace(/\/$/, '');
 
-  return ((path === '') ? '/' : path);
-}
 
 let exported = {
   index: function(config) {
     let req = config.req;
     return req.app.db.collection('pages').findOne({
-      'path': getPath(req)
+      'path': bolt.getPathFromRequest(req)
     }).then(doc => {
       if (!doc) {
         throw "Document not found in Database";
