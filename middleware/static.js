@@ -2,7 +2,7 @@
 
 const serve = require('serve-static');
 
-module.exports = function(app) {
+function init(app) {
   /**
    * @todo check if /public exists first
    */
@@ -10,3 +10,6 @@ module.exports = function(app) {
     app.use(serve(rootDir + 'public/', {}));
   });
 };
+
+init.priority = 2;
+module.exports = init;

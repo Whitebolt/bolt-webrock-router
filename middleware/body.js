@@ -2,7 +2,7 @@
 
 const bodyParser = require('body-parser');
 
-module.exports = function(app) {
+function init(app) {
   app.use(bodyParser.urlencoded({
     extended: true
   }));
@@ -10,3 +10,6 @@ module.exports = function(app) {
   app.use(bodyParser.text());
   app.use(bodyParser.raw());
 };
+
+init.priority = 6;
+module.exports = init;

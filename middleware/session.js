@@ -3,7 +3,7 @@
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 
-module.exports = function(app) {
+function init(app) {
   app.use(session({
     secret: app.config.secret,
     store: new MongoStore({
@@ -13,3 +13,6 @@ module.exports = function(app) {
     saveUninitialized: true
   }));
 };
+
+init.priority = 1;
+module.exports = init;
