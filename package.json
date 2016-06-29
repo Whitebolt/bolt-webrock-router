@@ -67,6 +67,12 @@
         "propertyColour": "cyan"
       },
       {
+        "event": "firingControllerMethod",
+        "action": "controller",
+        "description": "firing controller method ${params[0]} for",
+        "property": "${params[1]}"
+      },
+      {
         "event": "loadedController",
         "action": "load",
         "description": "controller"
