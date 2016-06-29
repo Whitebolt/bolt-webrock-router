@@ -45,7 +45,7 @@
   "devDependencies": {},
   "config": {
     "port": 3000,
-    "logLevel": 3,
+    "logLevel": 4,
     "eventConsoleLogging": [
       {
         "event": "configLoaded",
@@ -70,7 +70,22 @@
         "event": "firingControllerMethod",
         "action": "controller",
         "description": "firing controller method ${params[0]} for",
-        "property": "${params[1]}"
+        "property": "${params[1]}",
+        "level": 4
+      },
+      {
+        "event": "firingView",
+        "action": "view",
+        "description": "firing view ${params[0]} for",
+        "property": "${params[1]}",
+        "level": 4
+      },
+      {
+        "event": "firingTemplate",
+        "action": "template",
+        "description": "firing template ${params[0]} for",
+        "property": "${params[1]}",
+        "level": 4
       },
       {
         "event": "loadedController",
