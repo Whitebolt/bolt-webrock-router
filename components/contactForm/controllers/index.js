@@ -25,7 +25,8 @@ function save(component) {
       });
     });
 
-  return Promise.resolve({redirect: "/contact?formSent=1", done: true});
+  component.redirect = '/contact?formSent=1';
+  return Promise.resolve(component);
 }
 
 let exported = {

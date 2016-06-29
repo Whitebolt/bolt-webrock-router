@@ -3,18 +3,18 @@
 const passport = require('passport');
 const Strategy = require('passport-local').Strategy;
 const Promise = require('bluebird');
-const bcrypt = Promise.promisifyAll(require('bcrypt'));
-const compareAsync = Promise.promisify(bcrypt.compare);
+const bcrypt = require('bcrypt');
+const compare = Promise.promisify(bcrypt.compare);
 
 
 function init(app){
   function loginUser(username, password){
-    console.log("B", username);
     return getUserByAccount(username)
-      .then(user => {
-        console.log(user); return user;
-      })
-      .then(user => compareAsync(password, user.password));
+      .then(user =>
+        compare(password, user.password).then(authenticated =>
+          (!authenticated ? false : user)
+        )
+      );
   }
 
   function getUserByAccount(username) {
@@ -25,13 +25,18 @@ function init(app){
 
   function getUserRecordById(id) {
     return app.db.collection('users')
-      .findOne({_id: id.toString()})
+      .findOne({_id: bolt.mongoId(id)})
       .then(user => (user?user:Promise.reject('User not found')));
   }
 
   function login(username, password, callback){
-    console.log("A", username, password);
-    loginUser(username, password).nodeify(callback);
+    loginUser(username, password).then(user => {
+      if (user === false) {
+        callback(false, { message: 'Could not authenticate specified user and password.' })
+      } else {
+        callback(true, user);
+      }
+    });
   }
 
   function populateSessionWithUserData(session){
@@ -66,39 +71,12 @@ function init(app){
 
   app.use(function(req, res, next){
     const passport = req.session.passport;
-    const path = req.path.toString();
 
     ((!(passport && passport.user)) ?
       populateAnnoymousSessionData(req, res, next) :
       populateUserSessionData(req, res, next)
     )
-      //.then(() => console.log(req.session))
       .finally(next);
-  });
-
-  app.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
-  });
-
-  app.post('/login',
-    passport.authenticate('local', { failureRedirect: '/login' }),
-    (request, response) => response.redirect('/')
-  );
-
-  app.post('/change-password', function(req, res, next){
-    var id = req.session.passport.user;
-
-    getUserRecordById(id).then(user => {
-        if (req.body.password1 === req.body.password2) {
-          user.password = req.body.password1;
-          app.db.collection('users')
-            .save(user)
-            .then(next, next);
-        } else {
-          next();
-        }
-    }, next);
   });
 }
 
