@@ -1,0 +1,17 @@
+'use strict';
+
+const morgan = require('morgan');
+const Writable = require('stream').Writable;
+
+function init(app) {
+  const stream = new Writable({
+    write(chunk, encoding, callback) {
+      bolt.broadcast("access-log", chunk.toString());
+      callback();
+    }
+  });
+  app.use(morgan('combined', {stream}));
+}
+
+init.priority = 7;
+module.exports = init;
