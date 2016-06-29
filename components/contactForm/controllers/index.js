@@ -25,13 +25,13 @@ function save(component) {
       });
     });
 
-  return Promise.resolve({redirect: "/contact?formSent=1"});
+  return Promise.resolve({redirect: "/contact?formSent=1", done: true});
 }
 
 let exported = {
 	index: function(component) {
     let doc = component.doc || component.req.doc || {};
-      return component.view(doc._view || "contactForm/index", doc, component.req, component.parent);
+    return component.view(doc._view || "contactForm/index", doc, component.req, component.parent);
 	},
   save: save
 };

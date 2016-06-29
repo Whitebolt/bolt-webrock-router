@@ -3,13 +3,14 @@
 const Promise = module.parent.require("bluebird");
 
 let exported = {
-	index: function(config) {
-    let doc = config.doc || config.req.doc || {};
+	index: function(component) {
+    let doc = component.doc || component.req.doc || {};
 
     if (doc._component) {
-      return config.component(doc._component, doc, config.req, config.parent);
+      return component.component(doc._component, doc, component.req, component.parent);
     }
-    return config.view(doc._view || "content/index", doc, config.req, config.parent);
+
+    return component.view(doc._view || "content/index", doc, component.req, component.parent);
 	}
 };
 

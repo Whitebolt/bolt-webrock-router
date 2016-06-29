@@ -11,5 +11,5 @@ function init(app) {
   });
 };
 
-init.priority = 2;
+init.priority = 4;
 module.exports = init;

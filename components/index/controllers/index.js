@@ -1,12 +1,8 @@
 'use strict';
 
-const Promise = require('bluebird');
-
-
-
 let exported = {
-  index: function(config) {
-    let req = config.req;
+  index: function(component) {
+    let req = component.req;
     return req.app.db.collection('pages').findOne({
       'path': bolt.getPathFromRequest(req)
     }).then(doc => {
@@ -14,10 +10,11 @@ let exported = {
         throw "Document not found in Database";
       }
 
-      let template = ((doc.view && req.app.templates[doc.view]) ? doc.view : 'index');
+      component.template = ((doc.view && req.app.templates[doc.view]) ? doc.view : 'index');
       req.doc = doc;
+      component.done = true;
 
-      return {template}
+      return component;
     });
   }
 };
