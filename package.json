@@ -45,6 +45,66 @@
   "devDependencies": {},
   "config": {
     "port": 3000,
-    "logLevel": 3
+    "logLevel": 3,
+    "eventConsoleLogging": [
+      {
+        "event": "configLoaded",
+        "action": "init",
+        "property": "${Date().toLocaleString()}",
+        "description": "server",
+        "propertyColour": "green"
+      },
+      {
+        "event": "mongoConnected",
+        "action": "connect",
+        "description": "MongoDb database",
+        "propertyColour": "cyan"
+      },
+      {
+        "event": "SQLConnected",
+        "action": "connect",
+        "description": "SQL database",
+        "propertyColour": "cyan"
+      },
+      {
+        "event": "loadedController",
+        "action": "load",
+        "description": "controller"
+      },
+      {
+        "event": "loadedComponentView",
+        "action": "load",
+        "description": "component view"
+      },
+      {
+        "event": "loadedTemplate",
+        "action": "load",
+        "description": "template"
+      },
+      {
+        "event": "loadedMiddleware",
+        "action": "load",
+        "description": "middleware"
+      },
+      {
+        "event": "ranMiddleware",
+        "action": "run",
+        "description": "middleware",
+        "propertyColour": "cyan"
+      },
+      {
+        "event": "appListening",
+        "action": "listen",
+        "description": "Bolt Server on",
+        "propertyColour": "green"
+      },
+      {
+        "event": "runAppDone",
+        "action": "loaded",
+        "description": "Bolt Server",
+        "property": "${Date().toLocaleString()}",
+        "propertyColour": "green"
+      }
+    ]
   }
 }
