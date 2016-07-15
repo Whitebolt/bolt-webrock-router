@@ -2,41 +2,41 @@
 
 global.boltRootDir = __dirname;
 
-const loaders = {};
-
 function importLoaders(dirPath, importObj) {
-  return bolt.require.importDirectory(dirPath, {imports: importObj})
+  return bolt.require.importDirectory(dirPath, {imports: bolt.loaders})
     .then(()=> bolt.fire('loadersImported', importObj))
 }
 
 require('./lib/').then(bolt => {
+  bolt.loaders = {};
+
   bolt.hook('loadersImported', () => {
-    loaders.app.load(process.argv[2]);
+    bolt.loaders.app.load(process.argv[2]);
   });
 
   bolt.hook('initialiseAppDone', (hook, app) => {
-    loaders.database.load(app);
+    bolt.loaders.database.load(app);
   });
 
   bolt.hook('loadDatabasesDone', (hook, app) => {
-    loaders.middleware.load(app, app.config.root, app.middleware);
+    bolt.loaders.middleware.load(app);
   });
 
   bolt.hook('loadMiddlewareDone', (hook, app) => {
-    loaders.route.load(app);
+    bolt.loaders.route.load(app);
   });
 
   bolt.hook('loadRoutesDone', (hook, app) => {
-    loaders.component.load(app, loaders, app.config.root);
+    bolt.loaders.component.load(app);
   });
 
   bolt.hook('loadAllComponentsDone', (hook, app) => {
-    loaders.template.load(app);
+    bolt.loaders.template.load(app);
   });
 
   bolt.hook('loadTemplatesDone', (hook, app) => {
-    loaders.run(app);
+    bolt.loaders.run(app);
   });
 
-  importLoaders('./lib/loaders/', loaders);
+  importLoaders('./lib/loaders/');
 });
