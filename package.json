@@ -89,6 +89,11 @@
         "level": 4
       },
       {
+        "event": "loadedHook",
+        "action": "load",
+        "description": "hook"
+      },
+      {
         "event": "loadedController",
         "action": "load",
         "description": "controller"
