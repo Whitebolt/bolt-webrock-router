@@ -43,7 +43,13 @@
     "url": "git@aaron.whitebolt:bolt/server.git"
   },
   "license": "SEE LICENSE IN LICENSE.md",
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha --recursive test"
+  },
   "config": {
     "port": 3000,
     "logLevel": 4,
