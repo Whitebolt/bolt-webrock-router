@@ -76,14 +76,14 @@
       {
         "event": "firingControllerMethod",
         "action": "controller",
-        "description": "firing controller method ${params[0]} for",
+        "description": "firing controller method <%= params[0] %> for",
         "property": "<%= params[1] %>",
         "level": 4
       },
       {
         "event": "firingView",
         "action": "view",
-        "description": "firing view ${params[0]} for",
+        "description": "firing view <%= params[0] %> for",
         "property": "<%= params[1] %>",
         "level": 4
       },
