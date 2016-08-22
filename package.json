@@ -57,7 +57,7 @@
       {
         "event": "configLoaded",
         "action": "init",
-        "property": "${Date().toLocaleString()}",
+        "property": "<%= Date().toLocaleString(); %>",
         "description": "server",
         "propertyColour": "green"
       },
@@ -77,21 +77,21 @@
         "event": "firingControllerMethod",
         "action": "controller",
         "description": "firing controller method ${params[0]} for",
-        "property": "${params[1]}",
+        "property": "<%= params[1] %>",
         "level": 4
       },
       {
         "event": "firingView",
         "action": "view",
         "description": "firing view ${params[0]} for",
-        "property": "${params[1]}",
+        "property": "<%= params[1] %>",
         "level": 4
       },
       {
         "event": "firingTemplate",
         "action": "template",
-        "description": "firing template ${params[0]} for",
-        "property": "${params[1]}",
+        "description": "firing template <%= params[0] %> for",
+        "property": "<%= params[1] %>",
         "level": 4
       },
       {
@@ -135,7 +135,7 @@
         "event": "runAppDone",
         "action": "loaded",
         "description": "Bolt Server",
-        "property": "${Date().toLocaleString()}",
+        "property": "<%= Date().toLocaleString(); %>",
         "propertyColour": "green"
       }
     ]
