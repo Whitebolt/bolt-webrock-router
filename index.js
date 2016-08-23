@@ -9,7 +9,7 @@ function importLoaders(dirPath, importObj) {
 
 require('./lib/').then(bolt => {
   bolt.loaders = {};
-  bolt.hook('loadersImported', () => bolt.loaders.app.load(process.argv[2]));
+  bolt.hook('loadersImported', () => bolt.loadApplication(process.argv[2]));
   bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loaders.hooks.load(app));
   importLoaders('./lib/loaders/');
 });

@@ -6,7 +6,7 @@ const Writable = require('stream').Writable;
 function init(app) {
   const stream = new Writable({
     write(chunk, encoding, callback) {
-      bolt.broadcast("access-log", chunk.toString());
+      bolt.broadcast('/logging/access', chunk.toString());
       callback();
     }
   });
