@@ -72,9 +72,8 @@ function loadControllers(roots, controllers, component) {
       });
     });
   }
-  return bolt.fire('loadControllers', component)
-    .then(() => _loadControllers(roots, controllers, component))
-    .then(() => bolt.fire('loadControllersDone', component))
+
+  return bolt.fire(()=>_loadControllers(roots, controllers, component), 'loadControllers', component)
     .then(() => getApp(component));
 }
 
