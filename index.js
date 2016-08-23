@@ -2,14 +2,7 @@
 
 global.boltRootDir = __dirname;
 
-function importLoaders(dirPath, importObj) {
-  return bolt.require.importDirectory(dirPath, {imports: bolt.loaders})
-    .then(()=> bolt.fire('loadersImported', importObj))
-}
-
 require('./lib/').then(bolt => {
-  bolt.loaders = {};
-  bolt.hook('loadersImported', () => bolt.loadApplication(process.argv[2]));
-  bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loaders.hooks.load(app));
-  importLoaders('./lib/loaders/');
+  bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
+  bolt.loadApplication(process.argv[2]);
 });

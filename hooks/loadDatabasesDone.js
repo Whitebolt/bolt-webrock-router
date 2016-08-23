@@ -1,5 +1,5 @@
 'use strict';
 
 module.exports = [
-  (hook, app)=>bolt.loaders.middleware.load(app)
+  (hook, app)=>bolt.loadMiddleware(app)
 ];

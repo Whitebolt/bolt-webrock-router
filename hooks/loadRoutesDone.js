@@ -1,5 +1,5 @@
 'use strict';
 
 module.exports = [
-  (hook, app)=>bolt.loaders.component.load(app)
+  (hook, app)=>bolt.loadComponents(app)
 ];
