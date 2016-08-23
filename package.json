@@ -132,7 +132,7 @@
         "propertyColour": "green"
       },
       {
-        "event": "runAppDone",
+        "event": "afterRunApp",
         "action": "loaded",
         "description": "Bolt Server",
         "property": "<%= Date().toLocaleString(); %>",
