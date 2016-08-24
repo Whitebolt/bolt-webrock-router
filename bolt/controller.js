@@ -1,9 +1,13 @@
 'use strict';
 
-const Promise = require('bluebird');
-
-
-function getMethodPaths(methodPath) {
+/**
+ * Get all possible routes to given method in priority order.
+ *
+ * @private
+ * @param {string} methodPath   The main direct route.
+ * @returns {Array}             Array of possible paths.
+ */
+function _getMethodPaths(methodPath) {
   let methodPaths = [methodPath];
   let cLength = methodPath.length;
   let cPath = bolt.replaceLast(methodPath, '/index', '');
@@ -15,18 +19,29 @@ function getMethodPaths(methodPath) {
   return methodPaths;
 }
 
-function getRoutes(component, controller, controllerName) {
+
+/**
+ * Calculate all possible routes for a given controller and then assign these
+ * with correct priority to the application controller routes.
+ *
+ * @private
+ * @param {Object} component        The component object.
+ * @param {Object} controller       The controller object we are working on.
+ * @param {string} controllerName   The name of the controller.
+ * @returns {Object}                All controller routes for application.
+ */
+function _assignControllerRoutes(component, controller, controllerName) {
   let app = bolt.getApp(component);
   bolt.addDefaultObjects(app, "controllerRoutes");
 
   Object.keys(controller).map(name => {
     let methodPath = component.path + '/' + controllerName + '/' + name;
-    getMethodPaths(methodPath).forEach((methodPath, priority) => {
+    _getMethodPaths(methodPath).forEach((methodPath, priority) => {
       let _methodPath = methodPath.length?methodPath:'/';
-      app.controllerRoutes[_methodPath] = app.controllerRoutes[_methodPath] || [];
+      bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
       let method = controller[name];
       method.componentName = component.name;
-      method.methodPath = methodPath;
+      method.methodPath = methodPath;  // @todo should this be an array?
       app.controllerRoutes[_methodPath].push({method: controller[name], name, priority});
     });
   });
@@ -34,39 +49,76 @@ function getRoutes(component, controller, controllerName) {
   return app.controllerRoutes;
 }
 
-function _loadControllers(roots, importObj, component) {
-  let app = bolt.getApp(component);
-
-  return bolt.importIntoObject
-  ({
-    roots, importObj, dirName:'controllers', eventName:'loadedController'
-  }).then(controllers => {
-    controllers.forEach(
-      controller => Object.keys(controller).forEach(
-        controllerName => getRoutes(component, controller[controllerName], controllerName)
-      )
-    );
-    return controllers;
-  });
-}
-
-function  _addControllerRoutes(component) {
-  let app = bolt.getApp(component);
-
-  if (!app._controllerRoutesSorted) {
-    app._controllerRoutesSorted = true;
-    bolt.once('beforeRunApp', (options, app)=>{
-      Object.keys(app.controllerRoutes).forEach(route => {
-        app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
-      });
+/**
+ * Setup event callback to add routes to controller just before the app is run.
+ *
+ * @private
+ * @returns {boolean}   Always returns to true to ensure proper running of
+ *                      promise chains.
+ */
+function  _addControllerRoutesToApplication() {
+  bolt.once('beforeRunApp', (options, app)=>{
+    Object.keys(app.controllerRoutes).forEach(route => {
+      app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
     });
-  }
+  }, {id:'addControllerRoutesToApplication'});
+
+  return true;
 }
 
-function loadControllers(roots, controllers, component) {
-  _addControllerRoutes(component);
-  return bolt.fire(()=>_loadControllers(roots, controllers, component), 'loadControllers', component)
-    .then(() => bolt.getApp(component));
+/**
+ * Cycle through each controller and controller method generating associated routes.
+ *
+ * @private
+ * @param {Object} component    Parent component for given controllers.
+ * @param {Array} controllers   Array of controllers.
+ * @returns {Array}             The controller array as given in parameters.
+ */
+function _addControllerRoutes(component, controllers) {
+  controllers.forEach(
+    controller => Object.keys(controller).forEach(
+      controllerName => _assignControllerRoutes(component, controller[controllerName], controllerName)
+    )
+  );
+
+  return controllers;
+}
+
+/**
+ * Controllers load function.  Load controllers from given root(s) folder into
+ * the given import object.  Generate any associated roots and connect these to
+ * the application.
+ *
+ * @private
+ * @param {Object} component    Component object to import into.
+ * @param {string|Array} roots  Root folder(s) to search for controllers.
+ * @param {Object} importObject Object to import into.
+ * @returns {Promise}           Promise resolving to the supplied component.
+ */
+function _loadControllers(component, roots, importObj) {
+  return bolt
+    .importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'})
+    .then(controllers=>_addControllerRoutes(component, controllers))
+    .then(_addControllerRoutesToApplication)
+    .then(()=>importObj);
+}
+
+/**
+ * Search given folders for controllers and import into given component object,
+ * running an necessary setup.
+ *
+ * @param {Object} component                            Component object to
+ *                                                      import into.
+ * @param {string|Array} roots                          Root folder(s) to
+ *                                                      search for controllers.
+ * @param {Object} [controllers=component.controllers]  Object to import into.
+ * @returns {Promise}                                   Promise resolving to
+ *                                                      the supplied component.
+ */
+function loadControllers(component, roots, controllers=component.controllers) {
+  return bolt.fire(
+    ()=>_loadControllers(component, roots, controllers), 'loadControllers', component
+  ).then(() => component);
 }
 
 module.exports = {

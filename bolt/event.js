@@ -5,7 +5,18 @@ const Promise = require('bluebird');
 const events = new Map();
 const topics = new Map();
 const hooks = new Map();
+const idLookup = new WeakMap();
+const reverseLookup = new Map();
+
 const defaultOptions = {priority:0, context:{}};
+
+idLookup.set(events, new Map());
+idLookup.set(topics, new Map());
+idLookup.set(hooks, new Map());
+
+reverseLookup.set("events", events);
+reverseLookup.set("topics", topics);
+reverseLookup.set("hooks", hooks);
 
 /**
  * Connect to specified hook.  Hooks are run in-sequence as a hook is fired from
@@ -18,8 +29,9 @@ const defaultOptions = {priority:0, context:{}};
  * @param {Function} hookFunction           Hook function to call.
  * @param {Object} [options=defaultOptions] Params to pass to the hook caller.
  */
-function hook(hookName, hookFunction, options=defaultOptions) {
-  return _on(hookName, hookFunction, options, hooks);
+function hook(hookName, hookFunction, options) {
+  let _options = Object.assign({}, defaultOptions, options || {});
+  return _on(hookName, hookFunction, _options, hooks);
 }
 
 /**
@@ -32,8 +44,9 @@ function hook(hookName, hookFunction, options=defaultOptions) {
  * @param {Function} eventCallback          Hook function to call.
  * @param {Object} [options=defaultOptions] Params to pass to the event caller.
  */
-function on(eventName, eventCallback, options=defaultOptions) {
-  return _on(eventName, eventCallback, options, events);
+function on(eventName, eventCallback, options) {
+  let _options = Object.assign({}, defaultOptions, options || {});
+  return _on(eventName, eventCallback, _options, events);
 }
 
 /**
@@ -45,11 +58,12 @@ function on(eventName, eventCallback, options=defaultOptions) {
  * @param {Function} eventCallback          Hook function to call.
  * @param {Object} [options=defaultOptions] Params to pass to the event caller.
  */
-function once(eventName, eventCallback, options=defaultOptions) {
+function once(eventName, eventCallback, options) {
+  let _options = Object.assign({}, defaultOptions, options || {});
   let unreg = on(eventName, (..._params) => {
     unreg();
-    return eventCallback.apply(options.context || {}, _params);
-  }, options);
+    return eventCallback.apply(_options.context || {}, _params);
+  }, _options);
 }
 
 /**
@@ -75,8 +89,9 @@ function once(eventName, eventCallback, options=defaultOptions) {
  *                                          topic data.
  * @param {Object} [options=defaultOptions] Params to pass to the topic caller.
  */
-function subscribe(topicName, topicHandler, options=defaultOptions) {
-  return _on(topicName, topicHandler, options, topics);
+function subscribe(topicName, topicHandler, options) {
+  let _options = Object.assign({}, defaultOptions, options || {});
+  return _on(topicName, topicHandler, _options, topics);
 }
 
 /**
@@ -94,11 +109,10 @@ function subscribe(topicName, topicHandler, options=defaultOptions) {
  */
 function off(hookName, hookTypes) {
   let hookNames = bolt.splitAndTrim(hookName, ',');
-  (hookTypes ? bolt.splitAndTrim(hookTypes.toLowerCase(), '/').map(hookType=>{
-    if (hookType === 'events') return events;
-    if (hookType === 'topics') return topics;
-    if (hookType === 'hooks') return hooks;
-  }) : [events, topics, hooks]).forEach(lookup=>{
+  (hookTypes ?
+    bolt.splitAndTrim(hookTypes.toLowerCase(), '/').map(hookType=>reverseLookup.get(hookType)) :
+    reverseLookup
+  ).forEach(lookup=>{
     hookNames.forEach(hookName=>{
       if (lookup.has(hookName)) lookup.delete(hookName);
     });
@@ -241,9 +255,13 @@ function _on(hookName, handler, options, lookup) {
 function _onCreate(hookName, handler, options, lookup) {
   if (!lookup.has(hookName)) lookup.set(hookName, []);
   let hooks = lookup.get(hookName);
-  let id = bolt.randomString(32);
-  hooks.push({handler, options, id});
-  lookup.set(hookName, hooks.sort(_hookPrioritySorter));
+  let id = options.id || bolt.randomString(32);
+  let _idLookup = idLookup.get(lookup);
+  if (!_idLookup.has(id)) {
+    _idLookup.set(id, true);
+    hooks.push({handler, options, id});
+    lookup.set(hookName, hooks.sort(_hookPrioritySorter));
+  }
   return id;
 }
 

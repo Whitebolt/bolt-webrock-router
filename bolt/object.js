@@ -6,17 +6,21 @@
  * properties already exist, leave as.
  *
  * @public
- * @param {Object} obj                Object to work on.
- * @param {Array|string} properties   Properties to set.
- * @returns {Object}                  The original object returned
- *                                    for chaining.
+ * @param {Object} obj                      Object to work on.
+ * @param {Array|string} properties         Properties to set.
+ * @param {boolean} [defaultIsArray=false]  Set to blank array instead of blank
+ *                                          object, if true.
+ * @returns {Object}                        The original object returned
+ *                                          for chaining.
  */
-function addDefaultObjects(obj, properties) {
+function addDefaultObjects(obj, properties, defaultIsArray=false) {
   (
     bolt.isString(properties) ?
       bolt.splitAndTrim(properties, ',') :
       properties
-  ).forEach(prop=>{obj[prop] = obj[prop] || {};});
+  ).forEach(prop=>{
+    obj[prop] = obj[prop] || (defaultIsArray?[]:{});
+  });
   return obj;
 }
 

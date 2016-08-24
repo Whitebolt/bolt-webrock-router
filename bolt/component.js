@@ -29,7 +29,7 @@ function _loadComponents(app, roots) {
 
       return Promise.all([
         bolt.fire(() => bolt.loadHooks(component, dirPath), 'loadComponentHooks', app),
-        bolt.fire(() => bolt.loadControllers(dirPath, component.controllers, component), 'loadComponentControllers', app),
+        bolt.fire(() => bolt.loadControllers(component, dirPath), 'loadComponentControllers', app),
         bolt.fire(() => bolt.loadComponents(component, dirPath), 'loadComponentComponents', app)
       ]);
     });
