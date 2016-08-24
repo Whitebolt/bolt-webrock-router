@@ -256,13 +256,26 @@ function _onCreate(hookName, handler, options, lookup) {
   if (!lookup.has(hookName)) lookup.set(hookName, []);
   let hooks = lookup.get(hookName);
   let id = options.id || bolt.randomString(32);
-  let _idLookup = idLookup.get(lookup);
+  let _idLookup = _getIdLookup(hookName, lookup);
   if (!_idLookup.has(id)) {
     _idLookup.set(id, true);
     hooks.push({handler, options, id});
     lookup.set(hookName, hooks.sort(_hookPrioritySorter));
   }
   return id;
+}
+
+/**
+ * Get the id lookup map for given lookup object and hook name.
+ *
+ * @param {string} hookName   The hook name to lookup.
+ * @param {Object} lookup     The lookup map to lookup.
+ * @returns {Map}             The id lookup Map.
+ */
+function _getIdLookup(hookName, lookup) {
+  let _idLookup = idLookup.get(lookup);
+  if (!_idLookup.has(hookName)) _idLookup.set(hookName, new Map());
+  return _idLookup.get(hookName);
 }
 
 /**
