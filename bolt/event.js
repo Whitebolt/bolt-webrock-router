@@ -275,14 +275,7 @@ function _onCreateUnregister(hookName, lookup, id) {
  * @private
  */
 function _hookPrioritySorter(a, b) {
-  return (
-    ((a.options.priority || 1) > (b.options.priority || 1)) ?
-      1 :
-      (((a.options.priority || 1) < (b.options.priority || 1)) ?
-          -1 :
-          0
-      )
-  );
+  return bolt.prioritySorter(a.priority, b.priority);
 }
 
 /**

@@ -1,28 +1,28 @@
 'use strict';
 
-const Promise = require('bluebird');
+function _addMethodProperties(middleware, middlewareName) {
+  let method = middleware[middlewareName];
+  method.id = middlewareName;
+  method.priority = parseInt(method.priority || 0, 10);
+  return middleware[middlewareName];
+}
 
-
-function _loadMiddleware(app, roots, middleware) {
-  return Promise.all(bolt
-    .directoriesInDirectory(roots, ['middleware'])
-    .map(dirPath => bolt.require.importDirectory(dirPath, {
-      imports: middleware,
-      callback: middlewarePath => bolt.fire('loadedMiddleware', middlewarePath)
-    }))).then(() => {
-    return Object.keys(middleware).map(middlewareName => {
-      let method = middleware[middlewareName];
-      method.id = middlewareName;
-      method.priority = parseInt(method.priority || 0, 10);
-      return middleware[middlewareName];
-    }).sort((a, b) => ((a.priority > b.priority)?1:((a.priority < b.priority)?-1:0)));
-  }).then(middleware => {
-    middleware.forEach(middleware => {
-      bolt.fire('ranMiddleware', middleware.id.replace(/^\d+_/, ''));
-      middleware(app);
+function _loadMiddleware(app, roots, importObj) {
+  return bolt.importIntoApp({
+    roots, importObj, dirName:'middleware', eventName:'loadedMiddleware'
+  })
+    .then(middleware=>middleware[0])
+    .then(middleware=>Object.keys(middleware)
+        .map(middlewareName => _addMethodProperties(middleware, middlewareName))
+        .sort(bolt.prioritySorter)
+    )
+    .then(middleware=>{
+      middleware.forEach(middleware => {
+        bolt.fire('ranMiddleware', middleware.id.replace(/^\d+_/, ''));
+        middleware(app);
+      });
+      return app
     });
-    return app
-  });
 }
 
 

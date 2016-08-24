@@ -22,6 +22,10 @@ function makeArray(ary, convertFunction=(ary)=>[ary]) {
   return (Array.isArray(ary) ? ary : convertFunction(ary));
 }
 
+function prioritySorter(a, b) {
+  return ((a.priority > b.priority)?1:((a.priority < b.priority)?-1:0));
+}
+
 module.exports = {
-  makeArray
+  makeArray, prioritySorter
 };

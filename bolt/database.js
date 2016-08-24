@@ -68,10 +68,21 @@ function _loadDatabases(app, config=app.config.databases) {
 	}).then(() => app);
 }
 
+/**
+ * Get a mongo id for the given id value.
+ *
+ * @public
+ * @param {*} id        Value, which can be converted to a mongo-id.
+ * @returns {Object}    Mongo-id object.
+ */
+function mongoId(id) {
+	return new mongo.ObjectID(id);
+}
+
 function loadDatabases(app) {
 	return bolt.fire(()=>_loadDatabases(app), 'loadDatabases', app).then(() => app);
 }
 
 module.exports = {
-	loadDatabases
+	loadDatabases, mongoId
 };

@@ -147,6 +147,23 @@ function _loadApplication(configPath) {
     });
 }
 
+function importIntoApp(options) {
+  return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
+    .map(dirPath => bolt.require.importDirectory(dirPath, {
+      imports: options.importObj,
+      callback: controllerPath => bolt.fire(options.eventName, controllerPath)
+    }))
+  );
+}
+
+function getApp(component) {
+  let app = component;
+  while (app.parent) {
+    app = app.parent;
+  }
+  return app;
+}
+
 /**
  * Load a new bolt application using the given config path, firing the correct
  * initialisation events.
@@ -161,5 +178,5 @@ function loadApplication(configPath) {
 }
 
 module.exports = {
-  loadApplication
+  loadApplication, getApp, importIntoApp
 };

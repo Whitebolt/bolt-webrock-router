@@ -1,15 +1,7 @@
 'use strict';
 
 const Promise = require('bluebird');
-let firstRun = true;
 
-function getApp(component) {
-  let app = component;
-  while (app.parent) {
-    app = app.parent;
-  }
-  return app;
-}
 
 function getMethodPaths(methodPath) {
   let methodPaths = [methodPath];
@@ -24,8 +16,8 @@ function getMethodPaths(methodPath) {
 }
 
 function getRoutes(component, controller, controllerName) {
-  let app = getApp(component);
-  app.controllerRoutes = app.controllerRoutes || {};
+  let app = bolt.getApp(component);
+  bolt.addDefaultObjects(app, "controllerRoutes");
 
   Object.keys(controller).map(name => {
     let methodPath = component.path + '/' + controllerName + '/' + name;
@@ -42,16 +34,12 @@ function getRoutes(component, controller, controllerName) {
   return app.controllerRoutes;
 }
 
-function _loadControllers(roots, controllers, component) {
-  let app = getApp(component);
+function _loadControllers(roots, importObj, component) {
+  let app = bolt.getApp(component);
 
-  return Promise.all(bolt
-    .directoriesInDirectory(roots, ['controllers'])
-    .map(dirPath => bolt.require.importDirectory(dirPath, {
-      imports: controllers,
-      callback: controllerPath => bolt.fire('loadedController', controllerPath)
-    }))
-  ).then(controllers => {
+  return bolt.importIntoApp({
+    roots, importObj, dirName:'controllers', eventName:'loadedController'
+  }).then(controllers => {
     controllers.forEach(
       controller => Object.keys(controller).forEach(
         controllerName => getRoutes(component, controller[controllerName], controllerName)
@@ -61,20 +49,23 @@ function _loadControllers(roots, controllers, component) {
   });
 }
 
-function loadControllers(roots, controllers, component) {
-  if (firstRun) {
-    firstRun = false;
-    bolt.once('runApp', (options, app)=>{
+function  _addControllerRoutes(component) {
+  let app = bolt.getApp(component);
+
+  if (!app._controllerRoutesSorted) {
+    app._controllerRoutesSorted = true;
+    bolt.once('beforeRunApp', (options, app)=>{
       Object.keys(app.controllerRoutes).forEach(route => {
-        app.controllerRoutes[route] = app.controllerRoutes[route].sort((a, b) =>
-          ((a.priority > b.priority)?1:((a.priority < b.priority)?-1:0))
-        );
+        app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
       });
     });
   }
+}
 
+function loadControllers(roots, controllers, component) {
+  _addControllerRoutes(component);
   return bolt.fire(()=>_loadControllers(roots, controllers, component), 'loadControllers', component)
-    .then(() => getApp(component));
+    .then(() => bolt.getApp(component));
 }
 
 module.exports = {

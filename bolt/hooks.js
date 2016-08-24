@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 
 /**
  * Load hooks in given directory into the application.
