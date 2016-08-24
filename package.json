@@ -62,6 +62,11 @@
         "propertyColour": "green"
       },
       {
+        "event": "extraBoltModuleLoaded",
+        "action": "load",
+        "description": "bolt module"
+      },
+      {
         "event": "mongoConnected",
         "action": "connect",
         "description": "MongoDb database",

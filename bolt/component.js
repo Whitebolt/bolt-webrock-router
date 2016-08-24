@@ -17,7 +17,7 @@ function _getRelativeDirectoryPathForComponent(component) {
 }
 
 function _initComponentProperties(app, componentName) {
-  let component = bolt.addDefaultObjects(app.components[componentName], ['controllers', 'views']);
+  let component = bolt.addDefaultObjects(app.components[componentName], ['controllers', 'views', 'components']);
   component.parent = app;
   component.name = componentName;
   component.path = getComponentPath(component, componentName);

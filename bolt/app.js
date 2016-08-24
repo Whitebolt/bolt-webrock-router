@@ -51,6 +51,8 @@ function _initLogging(app) {
   app.config.eventConsoleLogging.forEach(config => _registerLogEvent(config));
   _initConsoleLogging(app.config.logLevel, (options, message) => console.log(message));
   _initAccessLogging(app.config.accessLog);
+
+  return app;
 }
 
 /**
@@ -125,7 +127,19 @@ function _getConfig(config) {
 function _createApp(config) {
   const app = express();
   app.config = _getConfig(config);
+  bolt.addDefaultObjects(app, ['middleware', 'templates']);
   return app;
+}
+
+function _boltLoader(app) {
+  return bolt.directoriesInDirectory(app.config.root, ['bolt'])
+    .filter(dirPath => (dirPath != boltRootDir + '/bolt'))
+    .map(dirPath=>bolt.require.importDirectory(dirPath, {
+      merge: true,
+      imports: bolt,
+      callback:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
+    }))
+    .then(()=>app);
 }
 
 /**
@@ -138,13 +152,13 @@ function _createApp(config) {
  */
 function _loadApplication(configPath) {
   return bolt.require(configPath)
-    .then(config => _createApp(config))
+    .then(_createApp)
+    .then(_initLogging)
     .then(app=>{
-      _initLogging(app);
       bolt.fire('configLoaded', configPath);
-      bolt.addDefaultObjects(app, ['middleware', 'templates']);
       return app;
-    });
+    })
+    .then(_boltLoader);
 }
 
 /**
