@@ -48,25 +48,10 @@ function loadAllTemplates(options, templateName=options.templateName) {
   }));
 }
 
-function loadAllComponentViews(app, options = {}) {
-  options = parseLoadOptions(app, options);
-  return Promise.all(getComponentDirectories(options.roots).map(componentDir => {
-    const component =  getComponentObj(app, componentDir);
-    const componentOptions = getComponentOptions(component, componentDir, options);
-    return _loadComponentViews(component, componentDir, componentOptions);
-  })).then(() => app);
-}
-
-function loadAllTemplateOverrides(app, options, templateName=options.templateName) {
-  if (Array.isArray(templateName)) {
-    return Promise.all(templateName.map(templateName => loadAllTemplateOverrides(app, options, templateName)));
-  }
-
-  return Promise.all(getTemplateDirectories(options.roots, templateName).map(templateDir => {
-    let _options = Object.assign({}, options);
-    _options.roots = [templateDir];
-    return loadAllComponentViews(app, _options);
-  })).then(() => app);
+function loadComponentViews(component, dirPath) {
+  const app = bolt.getApp(component);
+  const componentOptions = getComponentOptions(component, dirPath, parseLoadOptions(app));
+  return _loadComponentViews(component, dirPath, componentOptions).then(()=>app);
 }
 
 function parseLoadOptions(app, options = {}) {
@@ -97,22 +82,6 @@ function createLocalsObject(locals = {}) {
   return locals;
 }
 
-function getComponentDirectories(roots) {
-  return Promise.all(bolt.directoriesInDirectory(roots, ['components']).map(componentDir =>
-    bolt.directoriesInDirectory(componentDir)
-  )).then(componentDirs => bolt.flatten(componentDirs));
-}
-
-function getComponentObj(app, componentDir) {
-  const componentName = path.basename(componentDir);
-  app.components = app.components || {};
-  app.components[componentName] = app.components[componentName] || {};
-  const component =  app.components[componentName];
-  component.views = component.views || {};
-
-  return component;
-}
-
 function getComponentOptions(component, componentDir, parentOptions = {}) {
   const options = Object.assign({}, parentOptions);
   options.views = component.views;
@@ -139,9 +108,7 @@ function _loadComponentViews(component, componentDir, componentOptions) {
     let viewText = loadViewText(viewPath, componentOptions);
     bolt.fire('loadedComponentView', viewPath);
     return viewText;
-  })).then(() => { // next level
-    return loadAllComponentViews(component, componentOptions);
-  });
+  }));
 }
 
 function loadViewText(filename, options) {
@@ -230,6 +197,20 @@ function getMethod(route, app) {
   return methods.shift();
 }
 
+function _getComponentOverridePaths(component) {
+  let rootApp = bolt.getApp(component);
+  let overridePaths = [];
+  if (rootApp.config) {
+    (rootApp.config.template || []).forEach(templateName => {
+      (rootApp.config.root || []).forEach(
+        root=>overridePaths.push(`${root}templates/${templateName}${component.filePath}`)
+      );
+    });
+  }
+
+  return overridePaths;
+}
+
 function _getView(viewName, componentName, req) {
   let parts = viewName.split('/');
   let _viewName = parts.pop();
@@ -245,9 +226,13 @@ function _loadTemplates(app, options) {
   if (!options.templateName || !options.roots) return app;
   app.applyTemplate = applyTemplate;
 
-  return loadAllTemplates(options)
-    .then(() => loadAllComponentViews(app, options))
-    .then(() => loadAllTemplateOverrides(app, options))
+  return loadAllTemplates(options);
+}
+
+function loadComponentViewsTemplateOverrides(component) {
+  return Promise.all(
+    _getComponentOverridePaths(component).map(dirPath=>bolt.loadComponentViews(component, dirPath))
+  );
 }
 
 function loadTemplates(app, options = {}) {
@@ -255,5 +240,5 @@ function loadTemplates(app, options = {}) {
 }
 
 module.exports = {
-  loadTemplates
+  loadTemplates, loadComponentViews, loadComponentViewsTemplateOverrides
 };

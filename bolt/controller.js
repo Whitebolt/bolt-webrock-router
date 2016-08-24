@@ -36,12 +36,15 @@ function _assignControllerRoutes(component, controller, controllerName) {
 
   Object.keys(controller).map(name => {
     let methodPath = component.path + '/' + controllerName + '/' + name;
+    Object.assign(controller[name], {
+      componentName: component.name,
+      componentPath: component.path,
+      methodPath: methodPath
+    });
+
     _getMethodPaths(methodPath).forEach((methodPath, priority) => {
       let _methodPath = methodPath.length?methodPath:'/';
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
-      let method = controller[name];
-      method.componentName = component.name;
-      method.methodPath = methodPath;  // @todo should this be an array?
       app.controllerRoutes[_methodPath].push({method: controller[name], name, priority});
     });
   });

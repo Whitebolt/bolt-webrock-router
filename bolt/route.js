@@ -14,18 +14,12 @@ function getMethods(app, req) {
   getPaths(req).forEach(route => {
     if (app.controllerRoutes[route]) {
       app.controllerRoutes[route].forEach(method => {
-
         methods.push((component) => {
           bolt.fire("firingControllerMethod", method.method.methodPath, bolt.getPathFromRequest(req));
-          return method.method(component).then(component => {
-            component.component = component.component || method.method.componentName;
-            let componentPath = method.method.methodPath.split('/');
-            componentPath.pop();
-            component.componentPath = componentPath.join('/');
-            return component;
-          });
+          component.component = component.component || method.method.componentName;
+          component.componentPath = method.method.componentPath;
+          return method.method(component);
         });
-
       });
     }
   });

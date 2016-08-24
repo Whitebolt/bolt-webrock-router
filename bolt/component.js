@@ -12,6 +12,20 @@ function getComponentPath(component) {
   return compPath.join('/');
 }
 
+function _getRelativeDirectoryPathForComponent(component) {
+  return component.path.replace(/\//g, '/components/');
+}
+
+function _initComponentProperties(app, componentName) {
+  let component = bolt.addDefaultObjects(app.components[componentName], ['controllers', 'views']);
+  component.parent = app;
+  component.name = componentName;
+  component.path = getComponentPath(component, componentName);
+  component.filePath = _getRelativeDirectoryPathForComponent(component);
+
+  return component;
+}
+
 function _loadComponents(app, roots) {
   app.components = app.components || {};
 
@@ -22,14 +36,13 @@ function _loadComponents(app, roots) {
     .map(dirPath => {
       let componentName = path.basename(dirPath);
       bolt.addDefaultObjects(app.components, componentName);
-      let component = bolt.addDefaultObjects(app.components[componentName], ['controllers', 'views']);
-      component.parent = app;
-      component.name = componentName;
-      component.path = getComponentPath(component, componentName);
+      let component = _initComponentProperties(app, componentName);
 
       return Promise.all([
         bolt.fire(() => bolt.loadHooks(component, dirPath), 'loadComponentHooks', app),
         bolt.fire(() => bolt.loadControllers(component, dirPath), 'loadComponentControllers', app),
+        bolt.fire(() => bolt.loadComponentViews(component, dirPath), 'loadComponentViews', app),
+        bolt.fire(() => bolt.loadComponentViewsTemplateOverrides(component), 'loadComponentViewsTemplateOverride', app),
         bolt.fire(() => bolt.loadComponents(component, dirPath), 'loadComponentComponents', app)
       ]);
     });
