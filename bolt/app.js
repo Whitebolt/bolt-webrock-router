@@ -147,20 +147,37 @@ function _loadApplication(configPath) {
     });
 }
 
-function importIntoApp(options) {
+/**
+ * Import a given set of paths into the app.
+ *
+ * @public
+ * @param {Object} options                Options object for this import.
+ * @param {Array|string} options.roots    Root folder(s) to start imports from.
+ * @param {string} options.dirName        Directory name within each root to
+ *                                        import from.
+ * @param {Object} options.importObject   The object to import into.
+ * @param {string} options.eventName      The event to fire once import is complete.
+ * @returns {Promise}
+ */
+function importIntoObject(options) {
   return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
     .map(dirPath => bolt.require.importDirectory(dirPath, {
       imports: options.importObj,
-      callback: controllerPath => bolt.fire(options.eventName, controllerPath)
+      callback: filepath => bolt.fire(options.eventName, filepath)
     }))
   );
 }
 
+/**
+ * Get the root parent of the given component object. Scale through the
+ * hierarchy till the first object is reached.
+ *
+ * @param {Object} component    Application or component object.
+ * @returns {Object}            Express application instance.
+ */
 function getApp(component) {
   let app = component;
-  while (app.parent) {
-    app = app.parent;
-  }
+  while (app.parent) app = app.parent;
   return app;
 }
 
@@ -178,5 +195,5 @@ function loadApplication(configPath) {
 }
 
 module.exports = {
-  loadApplication, getApp, importIntoApp
+  loadApplication, getApp, importIntoObject
 };

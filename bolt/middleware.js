@@ -8,7 +8,7 @@ function _addMethodProperties(middleware, middlewareName) {
 }
 
 function _loadMiddleware(app, roots, importObj) {
-  return bolt.importIntoApp({
+  return bolt.importIntoObject({
     roots, importObj, dirName:'middleware', eventName:'loadedMiddleware'
   })
     .then(middleware=>middleware[0])

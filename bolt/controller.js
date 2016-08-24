@@ -37,7 +37,8 @@ function getRoutes(component, controller, controllerName) {
 function _loadControllers(roots, importObj, component) {
   let app = bolt.getApp(component);
 
-  return bolt.importIntoApp({
+  return bolt.importIntoObject
+  ({
     roots, importObj, dirName:'controllers', eventName:'loadedController'
   }).then(controllers => {
     controllers.forEach(
