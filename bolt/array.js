@@ -22,6 +22,13 @@ function makeArray(ary, convertFunction=(ary)=>[ary]) {
   return (Array.isArray(ary) ? ary : convertFunction(ary));
 }
 
+/**
+ * Sort an array according to it item's priority property.
+ *
+ * @param {Object} a    First sort item.
+ * @param {Object} b    Second sort item.
+ * @returns {integer}   Sort order for items a & b (-1, 0, or 1).
+ */
 function prioritySorter(a, b) {
   return ((a.priority > b.priority)?1:((a.priority < b.priority)?-1:0));
 }
