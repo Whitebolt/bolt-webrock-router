@@ -45,6 +45,10 @@ function _assignControllerRoutes(component, controller, controllerName) {
     _getMethodPaths(methodPath).forEach((methodPath, priority) => {
       let _methodPath = methodPath.length?methodPath:'/';
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
+      bolt.remove(
+        app.controllerRoutes[_methodPath],
+        item=>(item.method.methodPath === controller[name].methodPath)
+      );
       app.controllerRoutes[_methodPath].push({method: controller[name], name, priority});
     });
   });

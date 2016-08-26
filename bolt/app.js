@@ -175,10 +175,12 @@ function _loadApplication(configPath) {
  */
 function importIntoObject(options) {
   return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
-    .mapSeries(dirPath => bolt.require.importDirectory(dirPath, {
-      imports: options.importObj,
-      callback: filepath => bolt.fire(options.eventName, filepath)
-    }))
+    .mapSeries(dirPath => {
+      return bolt.require.importDirectory(dirPath, {
+        imports: options.importObj,
+        callback: filepath => bolt.fire(options.eventName, filepath)
+      });
+    })
   );
 }
 
