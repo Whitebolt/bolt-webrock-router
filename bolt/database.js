@@ -55,7 +55,7 @@ function _loadDatabases(app, config=app.config.databases) {
 	app.dbs = app.dbs || {};
 	let databases = Object.keys(config);
 
-	return Promise.all(databases).map(dbName => {
+	return Promise.all(databases.map(dbName => {
 		let options = config[dbName];
 		let loader = loaders[options.type];
 
@@ -65,7 +65,7 @@ function _loadDatabases(app, config=app.config.databases) {
 				app.db = database;
 			}
 		});
-	}).then(() => app);
+	})).then(() => app);
 }
 
 /**

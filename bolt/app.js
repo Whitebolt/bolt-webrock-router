@@ -175,7 +175,7 @@ function _loadApplication(configPath) {
  */
 function importIntoObject(options) {
   return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
-    .map(dirPath => bolt.require.importDirectory(dirPath, {
+    .mapSeries(dirPath => bolt.require.importDirectory(dirPath, {
       imports: options.importObj,
       callback: filepath => bolt.fire(options.eventName, filepath)
     }))

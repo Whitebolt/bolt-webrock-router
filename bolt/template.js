@@ -33,7 +33,9 @@ const templateFunctions = {
   }
 };
 
-
+/**
+ * @todo Does this need to execute in order using a special version of mapSeries?
+ */
 function loadAllTemplates(options, templateName=options.templateName) {
   if (Array.isArray(templateName)) {
     return Promise.all(templateName.map(templateName => loadAllTemplates(options, templateName)));

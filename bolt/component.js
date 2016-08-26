@@ -31,9 +31,9 @@ function _loadComponents(app, roots) {
 
   return bolt
     .directoriesInDirectory(roots, ['components'])
-    .map(dirPath => bolt.directoriesInDirectory(dirPath))
+    .mapSeries(dirPath => bolt.directoriesInDirectory(dirPath))
     .then(dirPaths => bolt.flatten(dirPaths))
-    .map(dirPath => {
+    .mapSeries(dirPath => {
       let componentName = path.basename(dirPath);
       bolt.addDefaultObjects(app.components, componentName);
       let component = _initComponentProperties(app, componentName);
@@ -42,9 +42,10 @@ function _loadComponents(app, roots) {
         bolt.fire(() => bolt.loadHooks(component, dirPath), 'loadComponentHooks', app),
         bolt.fire(() => bolt.loadControllers(component, dirPath), 'loadComponentControllers', app),
         bolt.fire(() => bolt.loadComponentViews(component, dirPath), 'loadComponentViews', app),
-        bolt.fire(() => bolt.loadComponentViewsTemplateOverrides(component), 'loadComponentViewsTemplateOverride', app),
         bolt.fire(() => bolt.loadComponents(component, dirPath), 'loadComponentComponents', app)
-      ]);
+      ]).then(
+        ()=> bolt.fire(() => bolt.loadComponents(component, dirPath), 'loadComponentComponents', app)
+      );
     });
 }
 
