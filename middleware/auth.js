@@ -81,7 +81,6 @@ function init(app) {
       .then(user=>getGroups(id, session.tags))
       .then(groups=>{
         session.groups = groups;
-        console.log(session);
         return groups;
       })
   }
@@ -98,7 +97,6 @@ function init(app) {
     addTags(req.headers['user-agent'], session.tags);
     return getGroups('', session.tags).then(groups=>{
       session.groups = groups;
-      console.log(session);
     });
   }
 
