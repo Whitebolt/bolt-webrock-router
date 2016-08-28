@@ -1,6 +1,7 @@
 'use strict';
 
-const rxPathFixSlashes = /^\/|\/$/g;
+const Promise = require('bluebird');
+
 
 function getIp(request) {
   return request.headers['x-forwarded-for'] ||
@@ -52,7 +53,7 @@ function getPaths(req) {
 }
 
 function callMethod(config) {
-  let method = config.methods.shift();
+  let method = Promise.method(config.methods.shift());
   method(config.component).then(() => {
     if (config.component.redirect) {
       config.res.redirect(config.component.status || 302, config.component.redirect);

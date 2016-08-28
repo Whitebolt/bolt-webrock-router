@@ -1,14 +1,22 @@
 'use strict';
 
-global.boltRootDir = __dirname;
-global.colour = require('colors');
-global.express = require('express');
-global.bolt = Object.assign(require('lodash'));
+const pm2 = require('bluebird').promisifyAll(require('pm2'));
 
-require('require-extra').importDirectory('./bolt/', {
-  merge: true,
-  imports: bolt
-}).then(bolt => {
-  bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
-  bolt.loadApplication(process.argv[2]);
+pm2.connectAsync().then(()=>{
+  return pm2.start({
+    script    : './index.js',
+    name: "lukehowellsmagic.co.uk",
+    args: "'~/Projects/www/lukehowellsmagic/server.json'",
+    cwd: './',
+    output: '~/Projects/www/lukehowellsmagic/logs/console.log',
+    error: '~/Projects/www/lukehowellsmagic/logs/error.log'
+  }).then(apps=>{
+    console.log("RUNNING");
+  }, err=>{
+    pm2.disconnect();
+    if (err) throw err;
+  });
+}, err=>{
+  console.error(err);
+  process.exit(2);
 });
