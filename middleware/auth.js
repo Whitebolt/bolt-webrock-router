@@ -5,9 +5,6 @@ const Strategy = require('passport-local').Strategy;
 const Promise = require('bluebird');
 const bcrypt = require('bcrypt');
 const compare = Promise.promisify(bcrypt.compare);
-const useragent = require('useragent');
-
-useragent(true);
 
 
 function init(app) {
@@ -52,51 +49,60 @@ function init(app) {
     });
   }
 
-  function getGroups(id, tags=[], groups=[]) {
-    let users = tags.concat(groups.map(group=>group._id));
-    if (id) users.unshift(bolt.mongoId(id));
+  function getGroups(userId, groups=[]) {
+    if (bolt.isArray(userId)) {
+      let lookup = new Map();
+
+      return Promise.all(userId.map(userId=>_getGroups(userId, groups)))
+        .then(groups=>bolt.flatten(groups))
+        .filter(group=>{
+          if (lookup.has(group._id)) return false;
+          lookup.set(group._id, true);
+          return true;
+        });
+    } else {
+      return _getGroups(userId, groups);
+    }
+  }
+
+  function _getGroups(userId, groups=[]) {
     let groupCount = groups.length;
+    let users = groups.map(group=>group._id);
+    if (userId) users.unshift(userId);
+
     return app.db.collection('groups').find({'users':{$elemMatch:{$in: users}}}).toArray().map(group=>{
       return {_id: bolt.mongoId(group._id), name: group.name}
-    }).then(groups=>((groups.length > groupCount) ? getGroups(id, tags, groups) : groups))
+    }).then(groups=>((groups.length > groupCount) ? _getGroups(userId, groups) : groups));
   }
 
-  function addTags(userAgent, tags) {
-    var agent = useragent.parse(userAgent);
-    tags.push('BROWSER:'+agent.family, 'DEVICE:'+agent.device.family, 'OS:'+agent.os.family);
-  }
-
-  function populateSessionWithUserData(session, userAgent=''){
+  function populateSessionWithUserData(session){
     let id = session.passport.user.toString();
     return getUserRecordById(id, hideUserFieldsFromSession)
       .then(user=>{
         session.user = {};
-        session.tags = ['LOGGEDIN'];
-        addTags(userAgent, session.tags);
         Object.keys(user).forEach(property => {
           session.user[property] = user[property];
         });
         return user;
       })
-      .then(user=>getGroups(id, session.tags))
+      .then(user=>getGroups([bolt.mongoId(id), 'Authenticated']))
       .then(groups=>{
         session.groups = groups;
+        console.log(session);
         return groups;
       })
   }
 
   function populateUserSessionData(req, res, next){
-    return populateSessionWithUserData(req.session, req.headers['user-agent']);
+    return populateSessionWithUserData(req.session);
   }
 
   function populateAnnoymousSessionData(req, res, next){
     let session = req.session;
-
     session.user = {};
-    session.tags = ['NOTLOGGEDIN'];
-    addTags(req.headers['user-agent'], session.tags);
-    return getGroups('', session.tags).then(groups=>{
+    return getGroups(['Annoymous']).then(groups=>{
       session.groups = groups;
+      console.log(session);
     });
   }
 
