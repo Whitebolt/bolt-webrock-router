@@ -3,6 +3,8 @@
 const Promise = require('bluebird');
 const mongo = require('mongodb');
 const mysql = require('mysql');
+const rrulestr = require('rrule').rrulestr;
+const dateParser = require('ical-date-parser');
 
 const loaders = {
 	mongodb: loadMongo,
@@ -126,6 +128,48 @@ function _isAuthorised(acl, session, accessLevel) {
   return false;
 }
 
+function toDate(dateString) {
+
+}
+
+function _isAuthorisedVisibility(acl) {
+  if (acl && acl.visibility && acl.visibility) {
+    let ruleString = '';
+
+    Object.keys(acl.visibility).forEach(key=>{
+      if ((key === 'DTSTART') || (key === 'DTEND') || (key === 'fields')) return;
+      if (bolt.isString(acl.visibility[key])) {
+        ruleString += key + ':' + acl.visibility[key] + '\n';
+      } else if (bolt.isArray(acl.visibility[key])) {
+        ruleString += key + ':' + acl.visibility[key].map(item=>{
+          if (bolt.isString(item)) {
+            return item;
+          } else {
+            return Object.keys(item).map(itemId=>itemId + '=' + item[itemId]).join(';');
+          }
+        }).join(',') + '\n';
+      } else {
+        ruleString += key + ':' + Object.keys(acl.visibility[key]).map(itemId=>
+          itemId + '=' + acl.visibility[key][itemId]
+        ).join(';') + '\n';
+      }
+    });
+
+    let duration = dateParser(acl.visibility['DTEND']) - dateParser(acl.visibility['DTSTART']);
+    let rrule = rrulestr(ruleString);
+    let now = Date.now();
+    let ranges = rrule
+      .all()
+      .map(date=>Date.parse(date))
+      .filter(date=>(new Date(date+duration) > now))
+      .filter(date=>(date <= now));
+
+    return (ranges.length > 0);
+  }
+
+  return true;
+}
+
 function _parseGetPathOPtions(options) {
   options.accessLevel = options.accessLevel || 'read';
   options.collection = options.collection || 'pages';
@@ -138,17 +182,17 @@ function _parseGetPathOPtions(options) {
 }
 
 function _authorisedFieldsMap(doc, session, accessLevel) {
-  if (doc._acl) {
-    if (doc._acl.security && doc._acl.security.fields) {
-      Object.keys(doc._acl.security.fields)
-        .map(field=>
-          (!_isAuthorised(doc._acl.security.fields[field], session, accessLevel) ? field : undefined)
-        )
-        .filter(field=>field)
-        .forEach(field=>{
-          if (doc.hasOwnProperty(field)) delete doc[field];
-        });
-    }
+  if (doc && doc._acl && doc._acl.fields) {
+    Object.keys(doc._acl.fields || {})
+      .map(field=> {
+        let auth = _isAuthorised(doc._acl.fields[field], session, accessLevel);
+        if (!auth) return field;
+        return (!_isAuthorisedVisibility(doc._acl.fields[field]) ? field : undefined);
+      })
+      .filter(field=>field)
+      .forEach(field=>{
+        if (doc.hasOwnProperty(field)) delete doc[field];
+      });
 
     delete doc._acl;
   }
@@ -164,6 +208,7 @@ function getPath(options) {
   options = _parseGetPathOPtions(options);
   return options.db.collection(options.collection).find({path: options.path}).toArray()
     .filter(doc=>(doc._acl ? _isAuthorised(doc._acl, options.session, options.accessLevel) : true))
+    .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
     .then(docs=>docs.sort(_prioritySorter))
     .then(docs=>_authorisedFieldsMap(docs[0], options.session, options.accessLevel));
 }
