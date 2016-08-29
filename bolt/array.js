@@ -30,7 +30,7 @@ function makeArray(ary, convertFunction=(ary)=>[ary]) {
  * @returns {integer}   Sort order for items a & b (-1, 0, or 1).
  */
 function prioritySorter(a, b) {
-  return ((a.priority > b.priority)?1:((a.priority < b.priority)?-1:0));
+  return (((a.priority || 1) > (b.priority || 1))?1:(((a.priority || 1) < (b.priority || 1))?-1:0));
 }
 
 module.exports = {
