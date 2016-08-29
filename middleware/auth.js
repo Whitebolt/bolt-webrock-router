@@ -6,6 +6,10 @@ const Promise = require('bluebird');
 const bcrypt = require('bcrypt');
 const compare = Promise.promisify(bcrypt.compare);
 
+/**
+ * @todo  Reduce inefficiencies with some form of caching, indexes and DbRefs.
+ */
+
 
 function init(app) {
   const hideUserFieldsFromSession = ['password', '_id'];
@@ -46,7 +50,7 @@ function init(app) {
       } else {
         callback(null, user);
       }
-    });
+    }, err=>callback(err, false));
   }
 
   function getGroups(userId, groups=[]) {
@@ -78,19 +82,9 @@ function init(app) {
   function populateSessionWithUserData(session){
     let id = session.passport.user.toString();
     return getUserRecordById(id, hideUserFieldsFromSession)
-      .then(user=>{
-        session.user = {};
-        Object.keys(user).forEach(property => {
-          session.user[property] = user[property];
-        });
-        return user;
-      })
+      .then(user=>{session.user = user; return user;})
       .then(user=>getGroups([bolt.mongoId(id), 'Authenticated']))
-      .then(groups=>{
-        session.groups = groups;
-        console.log(session);
-        return groups;
-      })
+      .then(groups=>{session.groups = groups; return groups;})
   }
 
   function populateUserSessionData(req, res, next){
@@ -100,10 +94,7 @@ function init(app) {
   function populateAnnoymousSessionData(req, res, next){
     let session = req.session;
     session.user = {};
-    return getGroups(['Annoymous']).then(groups=>{
-      session.groups = groups;
-      console.log(session);
-    });
+    return getGroups(['Annoymous']).then(groups=>{session.groups = groups;});
   }
 
   passport.use(new Strategy(login));
