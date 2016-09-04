@@ -34,7 +34,7 @@ function loadMongo(options) {
 		uri_decode_auth: true,
 		promiseLibrary: Promise
 	}).then(results => {
-		bolt.fire('mongoConnected', options.database);
+    if (global.bolt && bolt.fire) bolt.fire('mongoConnected', options.database);
 		return results;
 	})
 }
@@ -214,5 +214,5 @@ function getPath(options) {
 }
 
 module.exports = {
-	loadDatabases, mongoId, getPath
+	loadDatabases, mongoId, getPath, loadMongo
 };

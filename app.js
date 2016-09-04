@@ -10,6 +10,8 @@ let configDone = false;
 process.on('message', message=>{
   if ((message.type === 'config') && !configDone) {
     configDone = true;
+
+    console.log(message.data);
     launcher(message.data);
   }
 });
@@ -24,18 +26,4 @@ function launcher(config) {
     bolt.loadApplication(config);
   });
 }
-
-
-
-/*if (process.argv.length > 2) {
-  launcher(process.argv[2]);
-} else {
-  let stdin = process.stdin;
-  let pipedJsonText = "";
-
-  stdin.resume();
-  stdin.setEncoding('utf8');
-  stdin.on('data', chunk=>{pipedJsonText+=chunk;});
-  stdin.on('end', ()=>launcher(JSON.parse(pipedJsonText)));
-}*/
 
