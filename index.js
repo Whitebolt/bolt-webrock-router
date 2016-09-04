@@ -6,8 +6,8 @@ const pm2 = require('bluebird').promisifyAll(require('pm2'));
 const config = require('./server.json');
 const lodash = require('lodash');
 const linuxUser = require('linux-user');
-const fs = require('fs');
-const chown = Promise.promisify(fs.chown);
+const chown = Promise.promisify(require('chownr'));
+
 
 function loadMongo(options) {
   return mongo.MongoClient.connect(createMongoUrl(options), {
@@ -55,14 +55,25 @@ function mapObj(obj, mapKeys) {
 }
 
 function launchPm2(siteConfig) {
-  let _siteConfig = mapObj(siteConfig, ['name', 'args', 'cwd', 'out_file', 'error_file']);
+  let _siteConfig = mapObj(siteConfig, ['name', 'script', 'args', 'cwd', 'out_file', 'error_file']);
 
   return pm2.connectAsync()
     .then(()=>pm2.listAsync())
     .filter(apps=>(apps.name === _siteConfig.name))
-    .then(apps=>{if (apps.length) return pm2.deleteAsync(_siteConfig.name);})
-    .then(result=>pm2.startAsync(_siteConfig))
-    .then(result=>pm2.disconnect());
+    .then(apps=> {
+      if (apps.length) return pm2.deleteAsync(_siteConfig.name);
+    })
+    .then(()=>pm2.startAsync(_siteConfig))
+    .then(app=>{
+      const id = app[0].pm2_env.pm_id;
+      pm2.sendDataToProcessId(id, {
+        type: 'config',
+        data: siteConfig,
+        id,
+        topic: 'config'
+      });
+      pm2.disconnect();
+    });
 }
 
 function addUser(siteConfig) {
@@ -78,7 +89,8 @@ function addUser(siteConfig) {
     }).then(user=>{
       return chown(user.homedir, user.uid, user.gid).then(result=>user);
     }).then(user=>{
-      process.setuid(user.uid);
+      siteConfig.uid = user.uid;
+      siteConfig.gid = user.gid;
       return siteConfig;
     });
   } else {

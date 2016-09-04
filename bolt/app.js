@@ -151,7 +151,7 @@ function _boltLoader(app) {
  *                              is loaded.
  */
 function _loadApplication(configPath) {
-  return bolt.require(configPath)
+  return (bolt.isString(configPath) ? bolt.require(configPath) : Promise.resolve(configPath))
     .then(_createApp)
     .then(_initLogging)
     .then(app=>{

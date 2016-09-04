@@ -170,7 +170,7 @@ function _isAuthorisedVisibility(acl) {
   return true;
 }
 
-function _parseGetPathOPtions(options) {
+function _parseGetPathOptions(options) {
   options.accessLevel = options.accessLevel || 'read';
   options.collection = options.collection || 'pages';
   options.app = ((options.req && !options.app) ? options.req.app : options.app);
@@ -205,7 +205,7 @@ function _prioritySorter(a, b) {
 }
 
 function getPath(options) {
-  options = _parseGetPathOPtions(options);
+  options = _parseGetPathOptions(options);
   return options.db.collection(options.collection).find({path: options.path}).toArray()
     .filter(doc=>(doc._acl ? _isAuthorised(doc._acl, options.session, options.accessLevel) : true))
     .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))

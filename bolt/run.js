@@ -4,6 +4,10 @@ const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 
 function _runApp(app) {
+  if (app.config.uid && app.config.gid) {
+    process.setgid(app.config.gid);
+    process.setuid(app.config.uid);
+  }
   return new Promise(resolve => {
     app.listen(app.config.port, () => {
       bolt.fire('appListening', app.config.port);
