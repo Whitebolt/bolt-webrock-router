@@ -116,20 +116,18 @@ function _idIsInGroup(groupIds, authorisedIds) {
   return (found !== undefined);
 }
 
-function _isAuthorised(acl, session, accessLevel) {
-  if (acl && acl.security) {
-    let authorisedIds = _getAccessLevelLookup(acl, accessLevel.toLowerCase().trim());
-    if (authorisedIds.length) {
-      let groupIds = _getAccessGroups(session);
-      return _idIsInGroup(groupIds, authorisedIds);
-    }
+function _isAuthorised(doc, session, accessLevel) {
+  if (!doc) return false;
+  if (!doc._acl) return false;
+  if (!doc._acl.security) return false;
+
+  let authorisedIds = _getAccessLevelLookup(doc._acl, accessLevel.toLowerCase().trim());
+  if (authorisedIds.length) {
+    let groupIds = _getAccessGroups(session);
+    return _idIsInGroup(groupIds, authorisedIds);
   }
 
   return false;
-}
-
-function toDate(dateString) {
-
 }
 
 function _isAuthorisedVisibility(acl) {
@@ -170,7 +168,7 @@ function _isAuthorisedVisibility(acl) {
   return true;
 }
 
-function _parseGetPathOptions(options) {
+function _parseOptions(options) {
   options.accessLevel = options.accessLevel || 'read';
   options.collection = options.collection || 'pages';
   options.app = ((options.req && !options.app) ? options.req.app : options.app);
@@ -184,15 +182,6 @@ function _parseGetPathOptions(options) {
 
 function _prioritySorter(a, b) {
   return bolt.prioritySorter({priority: a._priority}, {priority: b._priority});
-}
-
-function getPath(options) {
-  options = _parseGetPathOptions(options);
-  return options.db.collection(options.collection).find({path: options.path}).toArray()
-    .filter(doc=>(doc._acl ? _isAuthorised(doc._acl, options.session, options.accessLevel) : true))
-    .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
-    .then(docs=>docs.sort(_prioritySorter))
-    .then(docs=>_removeUnauthorisedFields(docs[0], options.session, options.accessLevel));
 }
 
 function _removeUnauthorisedFields(doc, session, accessLevel) {
@@ -214,21 +203,37 @@ function _removeUnauthorisedFields(doc, session, accessLevel) {
   return doc;
 }
 
+function _getDoc(options) {
+  if (options.id) {
+    let query = Object.assign({_id: options.id}, options.query || {});
+    return options.db.collection(options.collection).findOne(query);
+  } else {
+    return options.db.collection(options.collection).find(options.query).toArray();
+  }
+}
+
+function getDoc(options) {
+  let _options = _parseOptions(options);
+
+  return bolt.makeArray(_getDoc(_options))
+    .filter(doc=>(_isAuthorised(doc, _options.session, _options.accessLevel)))
+    .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
+    .then(docs=>docs.sort(_prioritySorter))
+    .then(docs=>_removeUnauthorisedFields(docs[0], _options.session, _options.accessLevel));
+}
+
 function removeUnauthorisedFields(options) {
-  let _options = _parseGetPathOptions(options);
+  let _options = _parseOptions(options);
   return _removeUnauthorisedFields(_options.doc, _options.session, _options.accessLevel);
 }
 
 function isAuthorised(options) {
-  let _options = _parseGetPathOptions(options);
-  return _options.db.collection(_options.collection).findOne({_id: _options.id}).then(doc=>{
-    if (!doc) return false;
-    if (!doc._acl) return false;
-    if (!doc._acl.security) return false;
-    return _isAuthorised(doc._acl, _options.session, _options.accessLevel);
-  });
+  let _options = _parseOptions(options);
+  return _getDoc(options).then(
+    doc=>_isAuthorised(doc, _options.session, _options.accessLevel)
+  );
 }
 
 module.exports = {
-	loadDatabases, mongoId, getPath, loadMongo, isAuthorised, removeUnauthorisedFields
+	loadDatabases, mongoId, getDoc, loadMongo, isAuthorised, removeUnauthorisedFields
 };
