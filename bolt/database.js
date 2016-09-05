@@ -177,11 +177,12 @@ function _parseGetPathOptions(options) {
   options.db = ((bolt.isString(options.db) && options.app) ? options.app.dbs[options.db] : options.db);
   options.db = ((!options.db && options.app) ? options.app.db : options.db);
   options.session = options.session || (options.req ? options.req.session : {});
+  if (options.id) options.id = mongoId(options.id);
 
   return options;
 }
 
-function _authorisedFieldsMap(doc, session, accessLevel) {
+function authorisedFieldsMap(doc, session, accessLevel) {
   if (doc && doc._acl && doc._acl.fields) {
     Object.keys(doc._acl.fields || {})
       .map(field=> {
@@ -210,9 +211,19 @@ function getPath(options) {
     .filter(doc=>(doc._acl ? _isAuthorised(doc._acl, options.session, options.accessLevel) : true))
     .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
     .then(docs=>docs.sort(_prioritySorter))
-    .then(docs=>_authorisedFieldsMap(docs[0], options.session, options.accessLevel));
+    .then(docs=>authorisedFieldsMap(docs[0], options.session, options.accessLevel));
+}
+
+function isAuthorised(options) {
+  let _options = _parseGetPathOptions(options);
+  return _options.db.collection(_options.collection).findOne({_id: _options.id}).then(doc=>{
+    if (!doc) return false;
+    if (!doc._acl) return false;
+    if (!doc._acl.security) return false;
+    return _isAuthorised(doc._acl, _options.session, _options.accessLevel);
+  });
 }
 
 module.exports = {
-	loadDatabases, mongoId, getPath, loadMongo
+	loadDatabases, mongoId, getPath, loadMongo, isAuthorised, authorisedFieldsMap
 };
