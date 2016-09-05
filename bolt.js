@@ -20,7 +20,6 @@ const argv = require('yargs')
 
 if (!argv.development && argv.d) argv.development = argv.d;
 if (!argv.development && !argv.d) argv.development = false;
-if (!linuxUser) argv.development = false;
 
 
 function parseConfig(config) {
@@ -35,6 +34,7 @@ function loadConfig(name) {
     .then(parseConfig)
     .then(siteConfig=>{
       siteConfig.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : argv.development);
+      if (!linuxUser) siteConfig.development = true;
       return siteConfig;
     })
 }
@@ -108,9 +108,9 @@ function addUser(siteConfig) {
 if (_.indexOf(argv._, 'start') !== -1) {
   if (argv.hasOwnProperty('name')) {
     loadConfig(argv.name).then(
-      siteConfig=>((!siteConfig.development && linuxUser) ? addUser(siteConfig) : siteConfig)
+      siteConfig=>((!siteConfig.development) ? addUser(siteConfig) : siteConfig)
     ).then(
-      siteConfig=>((!siteConfig.development && linuxUser) ? launchPm2(siteConfig) : launchApp(siteConfig)),
+      siteConfig=>((!siteConfig.development) ? launchPm2(siteConfig) : launchApp(siteConfig)),
       err=>console.log(err)
     ).then(app=>{
       if (app && app.pm2_env) {
