@@ -1,19 +1,30 @@
+#!/usr/bin/env node
 'use strict';
 
 const Promise = require('bluebird');
 const dbBolt = require('./bolt/database');
 const pm2 = require('bluebird').promisifyAll(require('pm2'));
 const _ = require('lodash');
-const linuxUser = require('linux-user');
+let linuxUser;
+try {linuxUser = require('linux-user');} catch (err) {}
 const chown = Promise.promisify(require('chownr'));
+const launcher = require('./server');
 
 const config = require('/etc/bolt/server.json');
 const processFileProperties = Object.keys(require('pm2/lib/CLI/schema.json'));
-const boltConfigProperties = ['port', 'root', 'accessLog', 'template', 'databases', 'secret'];
+const boltConfigProperties = ['port', 'root', 'accessLog', 'template', 'databases', 'secret', 'development'];
+
+const argv = require('yargs')
+  .command('start <name>', 'Start the server process.')
+  .argv;
+
+if (!argv.development && argv.d) argv.development = argv.d;
+if (!argv.development && !argv.d) argv.development = false;
+if (!linuxUser) argv.development = false;
 
 
 function parseConfig(config) {
-  config.script = __dirname + '/app.js';
+  config.script = __dirname + '/server.js';
   let template = _.template(JSON.stringify(config));
   return JSON.parse(template(config));
 }
@@ -21,7 +32,11 @@ function parseConfig(config) {
 function loadConfig(name) {
   return dbBolt.loadMongo(config.db)
     .then(db=>db.collection('configs').findOne({name}))
-    .then(parseConfig);
+    .then(parseConfig)
+    .then(siteConfig=>{
+      siteConfig.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : argv.development);
+      return siteConfig;
+    })
 }
 
 function getPm2Instances(name) {
@@ -38,10 +53,10 @@ function removeOldInstances(pm2Config) {
 }
 
 function startInstance(pm2Config, boltConfig) {
-  pm2.startAsync(pm2Config).then(app=>{
+  return pm2.startAsync(pm2Config).then(app=>{
     const id = app[0].pm2_env.pm_id;
     pm2.sendDataToProcessId(id, {type:'config', data:boltConfig, id, topic:'config'});
-    pm2.disconnect();
+    return pm2.disconnectAsync().then(()=>app[0]);
   });
 }
 
@@ -52,6 +67,11 @@ function launchPm2(siteConfig) {
   return pm2.connectAsync()
     .then(()=>removeOldInstances(pm2Config))
     .then(()=>startInstance(pm2Config, boltConfig));
+}
+
+function launchApp(siteConfig) {
+  let boltConfig = _.pick(siteConfig, boltConfigProperties);
+  launcher(boltConfig);
 }
 
 function createUserIfNotCreated(isUser, siteConfig) {
@@ -84,9 +104,19 @@ function addUser(siteConfig) {
   }
 }
 
-loadConfig('whitebolt.net').then(
-  siteConfig=>addUser(siteConfig)
-).then(
-  siteConfig=>launchPm2(siteConfig),
-  err=>console.log(err)
-);
+
+if (_.indexOf(argv._, 'start') !== -1) {
+  if (argv.hasOwnProperty('name')) {
+    loadConfig(argv.name).then(
+      siteConfig=>((!siteConfig.development && linuxUser) ? addUser(siteConfig) : siteConfig)
+    ).then(
+      siteConfig=>((!siteConfig.development && linuxUser) ? launchPm2(siteConfig) : launchApp(siteConfig)),
+      err=>console.log(err)
+    ).then(app=>{
+      if (app && app.pm2_env) {
+        console.log(app.pm2_env.name, 'launched with id:', app.pm2_env.pm_id);
+        process.exit();
+      }
+    });
+  }
+}

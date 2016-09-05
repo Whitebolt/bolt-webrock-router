@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 
 function _runApp(app) {
-  if (app.config.uid && app.config.gid) { // downgrade from route just before going live.
+  if (app.config.uid && app.config.gid && !app.config.development) { // downgrade from route just before going live.
     process.setgid(app.config.gid);
     process.setuid(app.config.uid);
   }
