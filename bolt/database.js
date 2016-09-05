@@ -182,7 +182,20 @@ function _parseGetPathOptions(options) {
   return options;
 }
 
-function authorisedFieldsMap(doc, session, accessLevel) {
+function _prioritySorter(a, b) {
+  return bolt.prioritySorter({priority: a._priority}, {priority: b._priority});
+}
+
+function getPath(options) {
+  options = _parseGetPathOptions(options);
+  return options.db.collection(options.collection).find({path: options.path}).toArray()
+    .filter(doc=>(doc._acl ? _isAuthorised(doc._acl, options.session, options.accessLevel) : true))
+    .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
+    .then(docs=>docs.sort(_prioritySorter))
+    .then(docs=>_removeUnauthorisedFields(docs[0], options.session, options.accessLevel));
+}
+
+function _removeUnauthorisedFields(doc, session, accessLevel) {
   if (doc && doc._acl && doc._acl.fields) {
     Object.keys(doc._acl.fields || {})
       .map(field=> {
@@ -201,17 +214,9 @@ function authorisedFieldsMap(doc, session, accessLevel) {
   return doc;
 }
 
-function _prioritySorter(a, b) {
-  return bolt.prioritySorter({priority: a._priority}, {priority: b._priority});
-}
-
-function getPath(options) {
-  options = _parseGetPathOptions(options);
-  return options.db.collection(options.collection).find({path: options.path}).toArray()
-    .filter(doc=>(doc._acl ? _isAuthorised(doc._acl, options.session, options.accessLevel) : true))
-    .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
-    .then(docs=>docs.sort(_prioritySorter))
-    .then(docs=>authorisedFieldsMap(docs[0], options.session, options.accessLevel));
+function removeUnauthorisedFields(options) {
+  let _options = _parseGetPathOptions(options);
+  return _removeUnauthorisedFields(_options.doc, _options.session, _options.accessLevel);
 }
 
 function isAuthorised(options) {
@@ -225,5 +230,5 @@ function isAuthorised(options) {
 }
 
 module.exports = {
-	loadDatabases, mongoId, getPath, loadMongo, isAuthorised, authorisedFieldsMap
+	loadDatabases, mongoId, getPath, loadMongo, isAuthorised, removeUnauthorisedFields
 };
