@@ -29,6 +29,16 @@ function getPathPartsFromRequest(req) {
   return getPathFromRequest(req).split('/').filter(part => (part.trim() !== ''));
 }
 
+function objectToQueryString(obj) {
+  let queryString = [];
+
+  Object.keys(obj).forEach(key=>{
+    queryString.push(encodeURIComponent(key) + (((obj[key] !== undefined) && (obj[key] !== ''))? '='+encodeURIComponent(obj[key]) : ''));
+  });
+
+  return queryString.join('&');
+}
+
 module.exports = {
-  getPathFromRequest, getPathPartsFromRequest
+  getPathFromRequest, getPathPartsFromRequest, objectToQueryString
 };
