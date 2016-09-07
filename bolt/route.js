@@ -70,36 +70,59 @@ function callMethod(config) {
   }, error => handleMethodErrors(error, config));
 }
 
-function contentIsType(res, type) {
-  return (bolt.indexOf((res.get('Content-Type') || '').split(';').filter(type=>type.trim()), type) !== -1);
+function contentIsType(type, matchType) {
+  let matchTypes = bolt.makeArray(matchType);
+  return ((type.filter(_type=>(bolt.indexOf(matchTypes, _type) !== -1))).length > 0);
 }
 
-function _loadRoutes(app) {
-  app.all('/*', (req, res, next) => {
+function getEncodingOfType(type, defaultEncoding='utf-8') {
+  if (type.length <= 1) return defaultEncoding;
+  let encodings = type
+    .filter(type=>(type.indexOf('charset=') !== -1))
+    .map(encoding=>encoding.split('=').pop());
+
+  return (encodings.length ? encodings.shift() : defaultEncoding);
+}
+
+function boltRouter(app) {
+  return (req, res, next)=>{
     let methods = getMethods(app, req);
     let component = {req, res, done: false};
     if (methods.length) {
-      callMethod({methods, component, req, res, next}).then(component=>next());
+      callMethod({methods, component, req, res, next})
+        .then(component=>{
+          if (component && component.res && !component.res.headersSent) next();
+        });
     } else {
       next();
     }
+  };
+}
+
+function getTypesArray(res) {
+  return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
+}
+
+function proxyRouter(app) {
+  return proxy(app.config.proxy, {
+    reqAsBuffer: true,
+    intercept: (rsp, data, req, res, callback)=>{
+      let type = getTypesArray(res);
+      if (contentIsType(type, 'text/html')) {
+        let _data = data.toString(getEncodingOfType(type));
+        let template = bolt.compileTemplate(_data, req.path, app);
+        Promise.resolve(template({}, req, {})).then(data=>callback(null, data));
+      } else {
+        callback(null, data);
+      }
+    }
   });
+}
 
-  if (app.config.proxy) {
-    let options = bolt.parseLoadOptions(app);
-
-    app.all('/*', proxy(app.config.proxy, {
-      reqAsBuffer: true,
-      intercept: (rsp, data, req, res, callback)=>{
-        if (contentIsType(res, 'text/html')) {
-          let _options = Object.assign({}, options, {filename:req.path});
-          let template = ejs.compile(data.toString('utf-8'), _options);
-          Promise.resolve(template({}, req, {})).then(data=>callback(null, data));
-        } else {
-          callback(null, data);
-        }
-    }}));
-  }
+function _loadRoutes(app) {
+  let routing = ['/*', boltRouter(app)];
+  if (app.config.proxy) routing.push(proxyRouter(app));
+  app.all.apply(app, routing);
 
   return Promise.resolve(app);
 }

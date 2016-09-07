@@ -117,13 +117,21 @@ function loadViewText(filename, options) {
   let views = options.views;
   return readFile(filename, 'utf-8').then(viewTxt => {
     let viewName = path.basename(filename, '.ejs');
-    let _options = Object.assign({}, options, {filename});
     views[viewName] = views[viewName] || {};
     views[viewName].text = viewTxt;
     views[viewName].path = filename;
-    views[viewName].compiled = ejs.compile(views[viewName].text, _options);
+    views[viewName].compiled = _compileTemplate(views[viewName].text, filename, options);
     return viewTxt;
   });
+}
+
+function _compileTemplate(text, filename, options) {
+  return compileTemplate(text, filename, {}, options);
+}
+
+function compileTemplate(text, filename, app, options=parseLoadOptions(app)) {
+  let _options = Object.assign({}, options, {filename});
+  return ejs.compile(text, _options);
 }
 
 function getTemplate(app, control) {
@@ -242,5 +250,5 @@ function loadTemplates(app, options = {}) {
 }
 
 module.exports = {
-  loadTemplates, loadComponentViews, loadComponentViewsTemplateOverrides, parseLoadOptions
+  loadTemplates, loadComponentViews, loadComponentViewsTemplateOverrides, compileTemplate
 };
