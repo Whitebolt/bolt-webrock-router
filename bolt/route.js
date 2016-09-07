@@ -1,6 +1,8 @@
 'use strict';
 
 const Promise = require('bluebird');
+const proxy = require('express-http-proxy');
+const ejs = require('ejs');
 
 
 function getIp(request) {
@@ -54,7 +56,7 @@ function getPaths(req) {
 
 function callMethod(config) {
   let method = Promise.method(config.methods.shift());
-  method(config.component).then(() => {
+  return method(config.component).then(() => {
     if (config.component.redirect) {
       config.res.redirect(config.component.status || 302, config.component.redirect);
       return config.res.end();
@@ -68,28 +70,36 @@ function callMethod(config) {
   }, error => handleMethodErrors(error, config));
 }
 
-function getAccessLogLine(req) {
-  let log = '';
-  log += getIp(req)
-  log += ' - ';
-  log += ' ' + ((req.session && req.session.userName)?req.session.userName:'-') + ' ';
-  log += Date().toLocaleString() + ' '
-  log += '"' + req.method + ' ' + req.path + '" ';
-  log += '200 ';
+function contentIsType(res, type) {
+  return (bolt.indexOf((res.get('Content-Type') || '').split(';').filter(type=>type.trim()), type) !== -1);
 }
 
 function _loadRoutes(app) {
   app.all('/*', (req, res, next) => {
-    let ip = getIp(req);
-
     let methods = getMethods(app, req);
     let component = {req, res, done: false};
     if (methods.length) {
-      callMethod({methods, component, req, res, next});
+      callMethod({methods, component, req, res, next}).then(component=>next());
     } else {
       next();
     }
   });
+
+  if (app.config.proxy) {
+    let options = bolt.parseLoadOptions(app);
+
+    app.all('/*', proxy(app.config.proxy, {
+      reqAsBuffer: true,
+      intercept: (rsp, data, req, res, callback)=>{
+        if (contentIsType(res, 'text/html')) {
+          let _options = Object.assign({}, options, {filename:req.path});
+          let template = ejs.compile(data.toString('utf-8'), _options);
+          Promise.resolve(template({}, req, {})).then(data=>callback(null, data));
+        } else {
+          callback(null, data);
+        }
+    }}));
+  }
 
   return Promise.resolve(app);
 }

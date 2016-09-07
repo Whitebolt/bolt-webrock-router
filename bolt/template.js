@@ -242,5 +242,5 @@ function loadTemplates(app, options = {}) {
 }
 
 module.exports = {
-  loadTemplates, loadComponentViews, loadComponentViewsTemplateOverrides
+  loadTemplates, loadComponentViews, loadComponentViewsTemplateOverrides, parseLoadOptions
 };

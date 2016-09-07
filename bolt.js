@@ -12,7 +12,7 @@ const launcher = require('./server');
 
 const config = require('/etc/bolt/server.json');
 const processFileProperties = Object.keys(require('pm2/lib/CLI/schema.json'));
-const boltConfigProperties = ['port', 'root', 'accessLog', 'template', 'databases', 'secret', 'development'];
+const boltConfigProperties = ['port', 'root', 'accessLog', 'template', 'databases', 'secret', 'development', 'proxy'];
 
 const argv = require('yargs')
   .command('start <name>', 'Start the server process.')

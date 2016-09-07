@@ -20,7 +20,7 @@
   ],
   "dependencies": {
     "bcrypt": "^0.8.7",
-    "bluebird": "^3.3.5",
+    "bluebird": "^3.4.6",
     "body-parser": "^1.15.2",
     "chownr": "^1.0.1",
     "colors": "^1.1.2",
@@ -33,7 +33,7 @@
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
     "lodash": "^4.13.1",
     "messenger": "0.0.9",
-    "mongodb": "^2.1.18",
+    "mongodb": "^2.2.9",
     "morgan": "^1.7.0",
     "mysql": "^2.10.2",
     "nodemailer": "^2.4.2",
