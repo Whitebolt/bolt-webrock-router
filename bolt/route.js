@@ -103,25 +103,34 @@ function getTypesArray(res) {
   return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
 }
 
-function proxyRouter(app) {
-  return proxy(app.config.proxy, {
-    reqAsBuffer: true,
-    intercept: (rsp, data, req, res, callback)=>{
+function proxyRouter(app, proxyConfig) {
+  let config = {reqAsBuffer: true};
+  if (proxyConfig.proxyParseForEjs) {
+    config.intercept = (rsp, data, req, res, callback)=>{
       let type = getTypesArray(res);
-      if (contentIsType(type, 'text/html')) {
+      if (contentIsType(type, proxyConfig.proxyParseForEjs)) {
         let _data = data.toString(getEncodingOfType(type));
-        let template = bolt.compileTemplate(_data, req.path, app);
+        let template = bolt.compileTemplate({text:_data, filename:req.path, app});
         Promise.resolve(template({}, req, {})).then(data=>callback(null, data));
       } else {
         callback(null, data);
       }
-    }
-  });
+    };
+  }
+  if (proxyConfig.slugger) {
+    config.forwardPathAsync = bolt[proxyConfig.slugger];
+  }
+
+  return proxy(proxyConfig.forwardPath, config);
 }
 
 function _loadRoutes(app) {
   let routing = ['/*', boltRouter(app)];
-  if (app.config.proxy) routing.push(proxyRouter(app));
+  if (app.config.proxy && app.config.proxy.forwardPath) {
+    bolt.makeArray(app.config.proxy).forEach(proxyConfig=>{
+      if (proxyConfig.forwardPath) routing.push(proxyRouter(app, proxyConfig));
+    });
+  }
   app.all.apply(app, routing);
 
   return Promise.resolve(app);

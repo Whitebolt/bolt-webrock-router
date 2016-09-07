@@ -120,18 +120,20 @@ function loadViewText(filename, options) {
     views[viewName] = views[viewName] || {};
     views[viewName].text = viewTxt;
     views[viewName].path = filename;
-    views[viewName].compiled = _compileTemplate(views[viewName].text, filename, options);
+    views[viewName].compiled = compileTemplate({text: views[viewName].text, filename, options});
     return viewTxt;
   });
 }
 
-function _compileTemplate(text, filename, options) {
-  return compileTemplate(text, filename, {}, options);
-}
-
-function compileTemplate(text, filename, app, options=parseLoadOptions(app)) {
-  let _options = Object.assign({}, options, {filename});
-  return ejs.compile(text, _options);
+function compileTemplate(config) {
+  let optionsTree = [{}];
+  if (config.app) {
+    optionsTree.push(parseLoadOptions(config.app, config.options || {}));
+  } else if (config.options) {
+    optionsTree.push(config.options);
+  }
+  if (config.filename) optionsTree.push({filename: config.filename})
+  return ejs.compile(config.text, Object.assign.apply(Object, optionsTree));
 }
 
 function getTemplate(app, control) {
