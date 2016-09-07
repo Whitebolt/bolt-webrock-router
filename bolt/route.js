@@ -110,7 +110,12 @@ function proxyRouter(app, proxyConfig) {
       let type = getTypesArray(res);
       if (contentIsType(type, proxyConfig.proxyParseForEjs)) {
         let _data = data.toString(getEncodingOfType(type));
-        let template = bolt.compileTemplate({text:_data, filename:req.path, app});
+        let options = {text:_data, filename:req.path, app};
+        if (proxyConfig.delimiter) {
+          options.options = options.options || {};
+          options.options.delimiter = proxyConfig.delimiter;
+        }
+        let template = bolt.compileTemplate(options);
         Promise.resolve(template({}, req, {})).then(data=>callback(null, data));
       } else {
         callback(null, data);

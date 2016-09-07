@@ -132,7 +132,7 @@ function compileTemplate(config) {
   } else if (config.options) {
     optionsTree.push(config.options);
   }
-  if (config.filename) optionsTree.push({filename: config.filename})
+  if (config.filename) optionsTree.push({filename: config.filename});
   return ejs.compile(config.text, Object.assign.apply(Object, optionsTree));
 }
 
