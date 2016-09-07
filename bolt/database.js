@@ -130,9 +130,10 @@ function _isAuthorised(doc, session, accessLevel) {
   return false;
 }
 
-function _isAuthorisedVisibility(acl) {
-  if (acl && acl.visibility && acl.visibility) {
+function _isAuthorisedVisibility(doc) {
+  if (doc && doc._acl && doc._acl.visibility && acl.visibility) {
     let ruleString = '';
+    let acl = doc._acl;
 
     Object.keys(acl.visibility).forEach(key=>{
       if ((key === 'DTSTART') || (key === 'DTEND') || (key === 'fields')) return;
@@ -176,6 +177,14 @@ function _parseOptions(options) {
   options.db = ((!options.db && options.app) ? options.app.db : options.db);
   options.session = options.session || (options.req ? options.req.session : {});
   if (options.id) options.id = mongoId(options.id);
+  if (Array.isArray(options.projection)) {
+    let temp = {};
+    options.projection.forEach(key=>{temp[key] = true;});
+    options.projection = temp;
+  }
+  if (!options.hasOwnProperty('filterByVisibility')) options.filterByVisibility = true;
+  if (!options.hasOwnProperty('filterByAccessLevel')) options.filterByAccessLevel = true;
+  if (!options.hasOwnProperty('filterUnauthorisedFields')) options.filterUnauthorisedFields = true;
 
   return options;
 }
@@ -206,20 +215,33 @@ function _removeUnauthorisedFields(doc, session, accessLevel) {
 function _getDoc(options) {
   if (options.id) {
     let query = Object.assign({_id: options.id}, options.query || {});
-    return options.db.collection(options.collection).findOne(query);
+    return options.db.collection(options.collection).findOne(query, options.projection);
   } else {
-    return options.db.collection(options.collection).find(options.query).toArray();
+    return options.db.collection(options.collection).find(options.query, options.projection).toArray();
   }
+}
+
+function getDocs(options) {
+  let _options = _parseOptions(options);
+
+  return _getDoc(_options).then(docs=>bolt.makeArray(docs))
 }
 
 function getDoc(options) {
   let _options = _parseOptions(options);
 
-  return bolt.makeArray(_getDoc(_options))
-    .filter(doc=>(_isAuthorised(doc, _options.session, _options.accessLevel)))
-    .filter(doc=>(doc._acl ? _isAuthorisedVisibility(doc._acl) : true))
+  return _getDoc(_options)
+    .then(docs=>bolt.makeArray(docs))
+    .then(docs=>
+      (options.filterByAccessLevel ? docs.filter(doc=>_isAuthorised(doc, _options.session, _options.accessLevel)) : docs)
+    )
+    .then(docs=>
+      (options.filterByVisibility ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs)
+    )
     .then(docs=>docs.sort(_prioritySorter))
-    .then(docs=>_removeUnauthorisedFields(docs[0], _options.session, _options.accessLevel));
+    .then(docs=>
+      (options.filterUnauthorisedFields ? _removeUnauthorisedFields(docs[0], _options.session, _options.accessLevel) : docs[0])
+    )
 }
 
 function removeUnauthorisedFields(options) {
@@ -235,5 +257,5 @@ function isAuthorised(options) {
 }
 
 module.exports = {
-	loadDatabases, mongoId, getDoc, loadMongo, isAuthorised, removeUnauthorisedFields
+	loadDatabases, mongoId, getDoc, getDocs, loadMongo, isAuthorised, removeUnauthorisedFields
 };
