@@ -18,7 +18,9 @@ function loadMysql(options) {
   let query = db.query;
   db.query = (sql)=>{
     if (bolt.isString(sql)) return query.call(db, sql);
-    return query.call(db, builder.sql(sql));
+    let _query = queryBuilder.sql(sql);
+    let _sql = _query.toString().replace(/\$\d+/g, '?').replace(/\"/g, '');
+    return query.call(db, _sql, _query.values);
   };
 
   return Promise.resolve(db);

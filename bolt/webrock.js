@@ -9,7 +9,16 @@ function webRockSlugger(req, res) {
   if (!pathParts.length) return Promise.resolve(req.path);
   let idKey = pathParts.shift();
   if (req && req.app && req.app.dbs && req.app.dbs.webRock) {
-    return req.app.dbs.webRock.query('SELECT * FROM page WHERE id_key="'+idKey+'"').spread(rows=>{
+    let query = {
+      type: 'select',
+      table: 'page',
+      where: {
+        id_key: idKey
+      }
+    };
+
+    return req.app.dbs.webRock.query(query).spread(rows=>{
+    //return req.app.dbs.webRock.query('SELECT * FROM page WHERE id_key="'+idKey+'"').spread(rows=>{
       if (rows.length) {
         let query = {
           wa_object_id: 1,
