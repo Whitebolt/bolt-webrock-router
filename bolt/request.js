@@ -29,16 +29,39 @@ function getPathPartsFromRequest(req) {
   return getPathFromRequest(req).split('/').filter(part => (part.trim() !== ''));
 }
 
-function objectToQueryString(obj) {
+function objectToQueryString(obj, splitter='&', defaultValue=undefined) {
   let queryString = [];
 
   Object.keys(obj).forEach(key=>{
-    queryString.push(encodeURIComponent(key) + (((obj[key] !== undefined) && (obj[key] !== ''))? '='+encodeURIComponent(obj[key]) : ''));
+    queryString.push(encodeURIComponent(key) + (((obj[key] !== defaultValue) && (obj[key] !== ''))? '='+encodeURIComponent(obj[key]) : ''));
   });
 
-  return queryString.join('&');
+  return queryString.join(splitter);
+}
+
+function queryStringToObject(queryString, splitter='&', defaultValue=undefined) {
+  let obj = {};
+  let parts = queryString.split(splitter);
+  parts.forEach(part=>{
+    let _parts = part.split('=');
+    let key = _parts.shift();
+    obj[key] = ((_parts.length) ? _parts.join('=') : defaultValue);
+  });
+  return obj;
+}
+
+function addQueryObjectToUrl(url, obj) {
+  let parts = url.split('?');
+  if (parts.length > 1) {
+    parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), obj));
+    return parts.join('?');
+  }
+  parts = url.split('#');
+  let queryString = objectToQueryString(obj);
+  parts[0] += ((queryString.trim() !== '') ? '?'+queryString : '');
+  return parts.join('#');
 }
 
 module.exports = {
-  getPathFromRequest, getPathPartsFromRequest, objectToQueryString
+  getPathFromRequest, getPathPartsFromRequest, objectToQueryString, queryStringToObject, addQueryObjectToUrl
 };

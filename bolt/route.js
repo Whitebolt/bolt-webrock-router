@@ -123,7 +123,7 @@ function proxyRouter(app, proxyConfig) {
     };
   }
   if (proxyConfig.slugger) {
-    config.forwardPathAsync = bolt[proxyConfig.slugger];
+    config.forwardPathAsync = bolt[proxyConfig.slugger](proxyConfig);
   }
 
   return proxy(proxyConfig.forwardPath, config);
