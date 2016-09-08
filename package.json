@@ -150,6 +150,12 @@
         "description": "Bolt Server",
         "property": "<%= Date().toLocaleString(); %>",
         "propertyColour": "green"
+      },
+      {
+        "event": "webRockReroute",
+        "action": "webrock",
+        "description": "re-route",
+        "propertyColour": "yellow"
       }
     ]
   }

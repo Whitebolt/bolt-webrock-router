@@ -32,8 +32,12 @@ function webRockSlugger(req, res) {
       } else {
         return req.path;
       }
-    });
+    }).then(path=>{
+      bolt.fire("webRockReroute", path);
+      return path;
+    })
   } else {
+    bolt.fire("webRockReroute", req.path);
     return Promise.resolve(req.path);
   }
 }
