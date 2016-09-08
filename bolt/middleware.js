@@ -2,8 +2,9 @@
 
 function _addMethodProperties(middleware, middlewareName) {
   let method = middleware[middlewareName];
+  let priority = (method.hasOwnProperty('priority') ? method.priority : 0);
   method.id = middlewareName;
-  method.priority = parseInt(method.priority || 0, 10);
+  method.priority = parseInt(priority, 10);
   return middleware[middlewareName];
 }
 

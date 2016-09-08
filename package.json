@@ -115,6 +115,11 @@
         "description": "hook"
       },
       {
+        "event": "loadedRouter",
+        "action": "load",
+        "description": "router"
+      },
+      {
         "event": "loadedController",
         "action": "load",
         "description": "controller"
