@@ -33,9 +33,11 @@
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
     "lodash": "^4.13.1",
     "messenger": "0.0.9",
+    "mongo-sql": "^2.7.5",
     "mongodb": "^2.2.9",
     "morgan": "^1.7.0",
     "mysql": "^2.10.2",
+    "mysql-promise": "^3.1.0",
     "nodemailer": "^2.4.2",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
@@ -154,7 +156,13 @@
       {
         "event": "webRockReroute",
         "action": "webrock",
-        "description": "re-route",
+        "description": "re-route <%= params[0] %> to",
+        "propertyColour": "yellow"
+      },
+      {
+        "event": "webRockProxy",
+        "action": "webrock",
+        "description": "proxy path",
         "propertyColour": "yellow"
       }
     ]
