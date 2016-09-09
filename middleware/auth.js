@@ -155,7 +155,6 @@ function init(app) {
 		if (parseInt(logout) === 1) {
 			delete req.body.wr_user_logout;
 			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
-				console.log('logging out');
 				db.query({
 					type: 'update',
 					table: 'user_log',
