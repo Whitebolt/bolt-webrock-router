@@ -18,13 +18,9 @@ function _loadRoutes(app, roots) {
       .map(routerName => _addMethodProperties(routers, routerName))
       .sort(bolt.prioritySorter)
     )
-    .then(routers=>{
-      console.log(routers);
-      routers.forEach(routerBuilder=>{
-        let routers = bolt.makeArray(routerBuilder(app));
-        routers.forEach(router=>{
-          app[routerBuilder.method](routerBuilder.route, router);
-        });
+    .each(routerBuilder=>{
+      bolt.makeArray(routerBuilder(app)).forEach(router=>{
+        app[router.method || routerBuilder.method](router.route || routerBuilder.route, router);
       });
     });
 }
