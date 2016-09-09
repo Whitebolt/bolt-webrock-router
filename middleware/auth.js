@@ -6,6 +6,9 @@ const Promise = module.parent.require('bluebird');
 const md5 = module.parent.require('md5');
 const session = module.parent.require('express-session');
 
+function getIp(req) {
+	return req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+}
 
 function getWebRockDb(app) {
 	if (app && app.dbs && app.dbs.webRock) {
@@ -77,6 +80,45 @@ function init(app) {
 		return Promise.resolve(true);
 	}
 
+	function addToSessionTable(req) {
+		if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
+			return db.query({
+				type: 'select',
+				table: 'user_log',
+				where: {wr_bolt_hash: req.sessionID}
+			}).spread(rows=>{
+				if (rows.length) {
+					if (rows[0].logged_out && (rows[0].logged_out === 1)) {
+						return db.query({
+							type: 'update',
+							table: 'user_log',
+							updates: {
+								logged_out: 0
+							},
+							where: {wr_bolt_hash: req.sessionID}
+						});
+					} else {
+						return Promise.resolve();
+					}
+				} else {
+					return db.query({
+						type: 'insert',
+						table: 'user_log',
+						values: {
+							wr_bolt_hash: req.sessionID,
+							user_id: parseInt(req.session.passport.user, 10),
+							ip: getIp(req),
+							failed: 0,
+							logged_out: 0,
+							sentdate: bolt.dateFormat(new Date(), 'yyyy-mm-dd hh:MM;ss')
+						}
+					});
+				}
+			});
+		}
+		return Promise.resolve();
+	}
+
 	app.use(passport.initialize());
 	app.use(passport.session());
 
@@ -93,18 +135,36 @@ function init(app) {
 
 	passport.deserializeUser((id, callback)=>getUserById(id).nodeify(callback));
 
+	function fieldFromGetOrPost(req, fieldName) {
+		let query = bolt.merge(req.query, req.body || {});
+		return query[fieldName];
+	}
+
+
 	app.post('/*',
 		passport.authenticate('local', {}),
 		(req, res, next)=>{
 			delete req.body.wr_username;
 			delete req.body.wr_password;
-			next();
+			addToSessionTable(req).then(()=>next());
 		}
 	);
 
-	app.post('/*', (req, res, next)=>{
-		if (req.body && req.body.wr_user_logout) {
+	app.all('/*', (req, res, next)=>{
+		let logout = fieldFromGetOrPost(req, 'wr_user_logout');
+		if (parseInt(logout) === 1) {
 			delete req.body.wr_user_logout;
+			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
+				console.log('logging out');
+				db.query({
+					type: 'update',
+					table: 'user_log',
+					updates: {
+						logged_out: 1
+					},
+					where: {wr_bolt_hash: req.sessionID}
+				});
+			}
 			req.logout();
 		}
 		next();

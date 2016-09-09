@@ -36,6 +36,7 @@ function getWebRockDb(req) {
 
 function returnNoReRoute(req) {
   bolt.fire("webRockProxy", req.path);
+  if (req.sessionID) return Promise.resolve(bolt.addQueryObjectToUrl(req.path, {wr_bolt_hash: req.sessionID}));
   return Promise.resolve(req.path);
 }
 
@@ -108,6 +109,7 @@ function webRockSlugger(proxyConfig) {
           id: id || 1,
           wa_route: bolt.getPathFromRequest(req)
         });
+        if (req.sessionID) urlQuery.wr_bolt_hash = req.sessionID;
         return getLongPath(doc, urlQuery);
       });
     } else if (id !== undefined) {
@@ -118,6 +120,7 @@ function webRockSlugger(proxyConfig) {
           wa_id: id || 1,
           wa_route: bolt.getPathFromRequest(req)
         });
+        if (req.sessionID) urlQuery.wr_bolt_hash = req.sessionID;
         return getLongPath(doc, urlQuery);
       });
     }
