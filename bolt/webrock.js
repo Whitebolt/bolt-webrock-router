@@ -1,6 +1,6 @@
 'use strict';
 
-const Promise = require('bluebird');
+const Promise = module.parent.require('bluebird');
 
 const rootPath = '/client/default.asp';
 const translations = {
