@@ -1,6 +1,6 @@
 {
-  "name": "bolt-server",
-  "description": "Bolt NodeJs Server",
+  "name": "bolt-webrock-proxy",
+  "description": "WebRock proxy project for bolt.  Allows bolt to proxy WebRock and add new features.",
   "author": "Whitebolt <hello@whitebolt.net>",
   "contributors": [
     {
@@ -12,167 +12,23 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "3.0.0",
+  "version": "0.0.1",
   "private": false,
   "keywords": [
     "Server",
-    "CMS"
+    "CMS",
+    "WebRock",
+    "Bolt"
   ],
   "dependencies": {
-    "bcrypt": "^0.8.7",
-    "bluebird": "^3.4.6",
-    "body-parser": "^1.15.2",
-    "chownr": "^1.0.1",
-    "colors": "^1.1.2",
-    "connect-mongo": "^1.1.0",
-    "ejs": "https://github.com/ssimpo/ejs",
-    "express": "^4.13.4",
-    "express-http-proxy": "^0.10.0",
-    "express-session": "^1.13.0",
-    "ical-date-parser": "^3.1.1",
-    "linux-user": "git+https://github.com/ssimpo/linux-user.git",
-    "lodash": "^4.13.1",
-    "messenger": "0.0.9",
-    "mongo-sql": "^2.7.5",
-    "mongodb": "^2.2.9",
-    "morgan": "^1.7.0",
-    "mysql": "^2.10.2",
-    "mysql-promise": "^3.1.0",
-    "nodemailer": "^2.4.2",
-    "passport": "^0.3.2",
-    "passport-local": "^1.0.0",
-    "pm2": "^1.1.3",
-    "require-extra": "^0.3.5",
-    "rrule": "https://github.com/jkbrzt/rrule.git",
-    "serve-static": "^1.10.2",
-    "yargs": "^5.0.0"
   },
-  "main": "./bolt.js",
   "repository": {
     "type": "git",
-    "url": "git@aaron.whitebolt:bolt/server.git"
+    "url": "git@aaron.whitebolt:bolt/webrock.git"
   },
   "license": "SEE LICENSE IN LICENSE.md",
   "devDependencies": {
-    "chai": "^3.5.0",
-    "mocha": "^3.0.2"
-  },
-  "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --recursive test"
   },
   "config": {
-    "port": 3000,
-    "logLevel": 4,
-    "eventConsoleLogging": [
-      {
-        "event": "configLoaded",
-        "action": "init",
-        "property": "<%= Date().toLocaleString(); %>",
-        "description": "server",
-        "propertyColour": "green"
-      },
-      {
-        "event": "extraBoltModuleLoaded",
-        "action": "load",
-        "description": "bolt module"
-      },
-      {
-        "event": "mongoConnected",
-        "action": "connect",
-        "description": "MongoDb database",
-        "propertyColour": "cyan"
-      },
-      {
-        "event": "SQLConnected",
-        "action": "connect",
-        "description": "SQL database",
-        "propertyColour": "cyan"
-      },
-      {
-        "event": "firingControllerMethod",
-        "action": "controller",
-        "description": "firing controller method <%= params[0] %> for",
-        "property": "<%= params[1] %>",
-        "level": 4
-      },
-      {
-        "event": "firingView",
-        "action": "view",
-        "description": "firing view <%= params[0] %> for",
-        "property": "<%= params[1] %>",
-        "level": 4
-      },
-      {
-        "event": "firingTemplate",
-        "action": "template",
-        "description": "firing template <%= params[0] %> for",
-        "property": "<%= params[1] %>",
-        "level": 4
-      },
-      {
-        "event": "loadedHook",
-        "action": "load",
-        "description": "hook"
-      },
-      {
-        "event": "loadedRouter",
-        "action": "load",
-        "description": "router"
-      },
-      {
-        "event": "loadedController",
-        "action": "load",
-        "description": "controller"
-      },
-      {
-        "event": "loadedComponentView",
-        "action": "load",
-        "description": "component view"
-      },
-      {
-        "event": "loadedTemplate",
-        "action": "load",
-        "description": "template"
-      },
-      {
-        "event": "loadedMiddleware",
-        "action": "load",
-        "description": "middleware"
-      },
-      {
-        "event": "ranMiddleware",
-        "action": "run",
-        "description": "middleware",
-        "propertyColour": "cyan"
-      },
-      {
-        "event": "appListening",
-        "action": "listen",
-        "description": "Bolt Server on",
-        "propertyColour": "green"
-      },
-      {
-        "event": "afterRunApp",
-        "action": "loaded",
-        "description": "Bolt Server",
-        "property": "<%= Date().toLocaleString(); %>",
-        "propertyColour": "green"
-      },
-      {
-        "event": "webRockProxy",
-        "action": "webrock",
-        "description": "proxy path",
-        "propertyColour": "yellow",
-        "level": 4
-      },
-      {
-        "event": "webRockReroute",
-        "action": "webrock",
-        "description": "re-route <%= params[0] %> to",
-        "property": "<%= params[1] %>",
-        "propertyColour": "yellow",
-        "level": 4
-      }
-    ]
   }
 }
