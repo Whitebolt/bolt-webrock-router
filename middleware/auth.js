@@ -4,10 +4,8 @@ const passport = module.parent.require('passport');
 const Strategy = module.parent.require('passport-local').Strategy;
 const Promise = module.parent.require('bluebird');
 const md5 = module.parent.require('md5');
+const session = module.parent.require('express-session');
 
-/**
- * @todo  Reduce inefficiencies with some form of caching, indexes and DbRefs.
- */
 
 function getWebRockDb(app) {
 	if (app && app.dbs && app.dbs.webRock) {
@@ -99,17 +97,30 @@ function init(app) {
 		passport.authenticate('local', {}),
 		(req, res, next)=>{
 			delete req.body.wr_username;
-			delete wr_password;
+			delete req.body.wr_password;
 			next();
 		}
 	);
+
+	app.post('/*', (req, res, next)=>{
+		if (req.body && req.body.wr_user_logout) {
+			delete req.body.wr_user_logout;
+			req.logout();
+		}
+		next();
+	})
 
 	app.all('/*', (req, res, next)=>{
 		if (req.session && req.session.passport) {
 			const passport = req.session.passport;
 			let populator = (passport.user ? populateUserSessionData : populateAnnoymousSessionData);
 			populator(req.session).finally(next);
+		} else {
+			next();
 		}
+	}, (req, res, next)=>{
+		req.session.save();
+		next();
 	});
 }
 
