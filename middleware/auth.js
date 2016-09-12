@@ -19,7 +19,7 @@ function getWebRockDb(app) {
 function init(app) {
 	let db = getWebRockDb(app);
 
-	function login(username, password, done) {
+	function login(req, username, password, done) {
 		if (!db) return done(null, false);
 		db.query({
 			type: 'select',
@@ -32,7 +32,26 @@ function init(app) {
 				}
 			}
 		}).spread(rows=>{
-			if (!rows.length) return Promise.reject('User not found');
+			let ip = getIp(req);
+			if (!rows.length) {
+				return db.query({
+					type: 'insert',
+					table: 'user_log',
+					values: {
+						wr_bolt_hash: req.sessionID,
+						user_id: 0,
+						ip,
+						failed: 1,
+						logged_out: 1,
+						failed_name: username,
+						sentdate: bolt.dateFormat(new Date(), 'yyyy-mm-dd hh:MM;ss')
+					}
+				}).then(()=>{
+					bolt.fire("webRockFailedLogin", username, ip);
+					return Promise.reject('User not found');
+				})
+			}
+			bolt.fire("webRockLogin", username, ip);
 			return rows[0];
 		}).then(row=>{
 			let user = {};
@@ -112,7 +131,8 @@ function init(app) {
 	passport.use(new Strategy({
 		usernameField: 'wr_username',
 		passwordField: 'wr_password',
-		session: true
+		session: true,
+		passReqToCallback: true
 	}, login));
 
 	passport.serializeUser((data, callback)=>{
@@ -148,9 +168,14 @@ function init(app) {
 						logged_out: 1
 					},
 					where: {wr_bolt_hash: req.sessionID}
-				});
+				}).then(()=>{
+					req.logout();
+					let username = ((req && req.session && req.session.user) ? req.session.user.name : 'Unknown');
+					bolt.fire("webRockLogout", username, getIp(req));
+				})
+			} else {
+				req.logout();
 			}
-			req.logout();
 		}
 		next();
 	})
