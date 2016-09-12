@@ -149,11 +149,19 @@ function init(app) {
 
 
 	app.post('/*',
-		passport.authenticate('local', {}),
 		(req, res, next)=>{
-			delete req.body.wr_username;
-			delete req.body.wr_password;
-			addToSessionTable(req).then(()=>next());
+			if (req.body.wr_username && req.body.wr_password) {
+				return passport.authenticate('local', {})(req, res, next);
+			}
+			return next();
+		},
+		(req, res, next)=>{
+			if (req.body.wr_username && req.body.wr_password) {
+				delete req.body.wr_username;
+				delete req.body.wr_password;
+				return addToSessionTable(req).then(()=>next());
+			}
+			return next();
 		}
 	);
 
@@ -161,7 +169,7 @@ function init(app) {
 		let logout = fieldFromGetOrPost(req, 'wr_user_logout');
 		if (parseInt(logout) === 1) {
 			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
-				db.query({
+				return db.query({
 					type: 'update',
 					table: 'user_log',
 					updates: {
@@ -172,12 +180,15 @@ function init(app) {
 					req.logout();
 					let username = ((req && req.session && req.session.user) ? req.session.user.name : 'Unknown');
 					bolt.fire("webRockLogout", username, getIp(req));
-				})
+					return next();
+				});
 			} else {
 				req.logout();
+				return next();
 			}
 		}
-		next();
+
+		return next();
 	})
 
 	app.all('/*', (req, res, next)=>{
@@ -186,11 +197,11 @@ function init(app) {
 			let populator = (passport.user ? populateUserSessionData : populateAnnoymousSessionData);
 			populator(req.session).finally(next);
 		} else {
-			next();
+			return next();
 		}
 	}, (req, res, next)=>{
 		req.session.save();
-		next();
+		return next();
 	});
 }
 
