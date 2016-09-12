@@ -85,22 +85,9 @@ function init(app) {
 			return db.query({
 				type: 'select',
 				table: 'user_log',
-				where: {wr_bolt_hash: req.sessionID}
+				where: {wr_bolt_hash: req.sessionID, logged_out:0}
 			}).spread(rows=>{
-				if (rows.length) {
-					if (rows[0].logged_out && (rows[0].logged_out === 1)) {
-						return db.query({
-							type: 'update',
-							table: 'user_log',
-							updates: {
-								logged_out: 0
-							},
-							where: {wr_bolt_hash: req.sessionID}
-						});
-					} else {
-						return Promise.resolve();
-					}
-				} else {
+				if (!rows.length) {
 					return db.query({
 						type: 'insert',
 						table: 'user_log',
@@ -153,7 +140,6 @@ function init(app) {
 	app.all('/*', (req, res, next)=>{
 		let logout = fieldFromGetOrPost(req, 'wr_user_logout');
 		if (parseInt(logout) === 1) {
-			//delete req.body.wr_user_logout;
 			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
 				db.query({
 					type: 'update',
