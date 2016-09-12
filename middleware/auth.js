@@ -153,7 +153,7 @@ function init(app) {
 	app.all('/*', (req, res, next)=>{
 		let logout = fieldFromGetOrPost(req, 'wr_user_logout');
 		if (parseInt(logout) === 1) {
-			delete req.body.wr_user_logout;
+			//delete req.body.wr_user_logout;
 			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
 				db.query({
 					type: 'update',

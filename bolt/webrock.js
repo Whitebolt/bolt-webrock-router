@@ -36,13 +36,13 @@ function getWebRockDb(req) {
 
 function returnNoReRoute(req) {
   bolt.fire("webRockProxy", req.path);
-  if (req.sessionID) return Promise.resolve(bolt.addQueryObjectToUrl(req.path, {wr_bolt_hash: req.sessionID}));
+  if (req.sessionID) return Promise.resolve(bolt.addQueryObjectToUrl(req.path, req.query, {wr_bolt_hash: req.sessionID}));
   return Promise.resolve(req.path);
 }
 
-function getLongPath(row, urlQuery) {
+function getLongPath(row, urlQuery, orginalQuery) {
   let _rootPath = (row.webfile ? row.webfile.toString() : rootPath);
-  return bolt.addQueryObjectToUrl(_rootPath, urlQuery);
+  return bolt.addQueryObjectToUrl(_rootPath, orginalQuery, urlQuery);
 }
 
 function getTable(objIdMapping, pathParts) {
@@ -110,7 +110,7 @@ function webRockSlugger(proxyConfig) {
           wa_route: bolt.getPathFromRequest(req)
         });
         if (req.sessionID) urlQuery.wr_bolt_hash = req.sessionID;
-        return getLongPath(doc, urlQuery);
+        return getLongPath(doc, urlQuery, req.query);
       });
     } else if (id !== undefined) {
       query.where = {$or: {id: id, id_key:id}};
@@ -121,7 +121,7 @@ function webRockSlugger(proxyConfig) {
           wa_route: bolt.getPathFromRequest(req)
         });
         if (req.sessionID) urlQuery.wr_bolt_hash = req.sessionID;
-        return getLongPath(doc, urlQuery);
+        return getLongPath(doc, urlQuery, req.query);
       });
     }
 
