@@ -147,16 +147,15 @@ function init(app) {
 		return query[fieldName];
 	}
 
-
 	app.post('/*',
 		(req, res, next)=>{
-			if (req.body.wr_username && req.body.wr_password) {
+			if (req.body && req.body.wr_username && req.body.wr_password) {
 				return passport.authenticate('local', {})(req, res, next);
 			}
 			return next();
 		},
 		(req, res, next)=>{
-			if (req.body.wr_username && req.body.wr_password) {
+			if (req.body && req.body.wr_username && req.body.wr_password) {
 				delete req.body.wr_username;
 				delete req.body.wr_password;
 				return addToSessionTable(req).then(()=>next());
