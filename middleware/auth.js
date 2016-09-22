@@ -143,7 +143,7 @@ function init(app) {
 	passport.deserializeUser((id, callback)=>getUserById(id).nodeify(callback));
 
 	function fieldFromGetOrPost(req, fieldName) {
-		let query = bolt.merge(req.query, req.body || {});
+		let query = bolt.merge({}, req.query, req.body || {});
 		return query[fieldName];
 	}
 
@@ -164,7 +164,7 @@ function init(app) {
 		}
 	);
 
-	app.all('/*', (req, res, next)=>{
+	app.all('/*',(req, res, next)=>{
 		let logout = fieldFromGetOrPost(req, 'wr_user_logout');
 		if (parseInt(logout) === 1) {
 			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
