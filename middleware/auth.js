@@ -190,13 +190,15 @@ function init(app) {
 	}
 
 	function webRockAuthViaEmail(req, res, next) {
-		let id = parseInt(bolt.splitAndTrim(req.path, '/').shift(), 10);
+		let pathParts = bolt.splitAndTrim(req.path, '/');
+		let id = parseInt(pathParts[1], 10);
+		let h = bolt.queryStringToObject(pathParts[2]).h;
 		let email = '';
 
 		return db.query({
 			type: 'select',
 			table: 'user',
-			where: {id, h:req.query['h']}
+			where: {id, h}
 		}).spread(rows=>{
 			if (!rows.length) return Promise.reject('User not found');
 
@@ -210,13 +212,13 @@ function init(app) {
 				type: 'update',
 				table: 'user',
 				updates: {isactive: 1, password: md5(wr_password)},
-				where: {id, h:req.query['h']}
+				where: {id, h]}
 			});
 		}).then(()=>next());
 	}
 
 	app.post('/*', webRockAuth, webRockAuthAddSession);
-	app.get(/\/\d+\/h\=[a-fA-F0-9]{32,32}/, webRockAuthViaEmail, webRockAuth, webRockAuthAddSession);
+	app.get(/\/login\/\d+\/h\=[a-fA-F0-9]{32,32}/, webRockAuthViaEmail, webRockAuth, webRockAuthAddSession);
 	app.all('/*', webRockLogout)
 
 	app.all('/*', (req, res, next)=>{
