@@ -147,24 +147,23 @@ function init(app) {
 		return query[fieldName];
 	}
 
-	app.post('/*',
-		(req, res, next)=>{
-			if (req.body && req.body.wr_username && req.body.wr_password) {
-				return passport.authenticate('local', {})(req, res, next);
-			}
-			return next();
-		},
-		(req, res, next)=>{
-			if (req.body && req.body.wr_username && req.body.wr_password) {
-				delete req.body.wr_username;
-				delete req.body.wr_password;
-				return addToSessionTable(req).then(()=>next());
-			}
-			return next();
+	function webRockAuth(req, res, next) {
+		if (req.body && req.body.wr_username && req.body.wr_password) {
+			return passport.authenticate('local', {})(req, res, next);
 		}
-	);
+		return next();
+	}
 
-	app.all('/*',(req, res, next)=>{
+	function webRockAuthAddSession(req, res, next) {
+		if (req.body && req.body.wr_username && req.body.wr_password) {
+			delete req.body.wr_username;
+			delete req.body.wr_password;
+			return addToSessionTable(req).then(()=>next());
+		}
+		return next();
+	}
+
+	function webRockLogout(req, res, next) {
 		let logout = fieldFromGetOrPost(req, 'wr_user_logout');
 		if (parseInt(logout) === 1) {
 			if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
@@ -188,7 +187,37 @@ function init(app) {
 		}
 
 		return next();
-	})
+	}
+
+	function webRockAuthViaEmail(req, res, next) {
+		let id = parsInt(bolt.splitAndTrim(req.path, '/').shift(), 10);
+		let email = '';
+
+		return db.query({
+			type: 'select',
+			table: 'user',
+			where: {id, h:req.query['h']}
+		}).spread(rows=>{
+			if (!rows.length) return Promise.reject('User not found');
+
+			let wr_username = rows[0]['email'];
+			let wr_password = bolt.randomString();
+
+			req.body = {wr_username, wr_password};
+			req.method = 'post';
+
+			return db.query({
+				type: 'update',
+				table: 'user',
+				updates: {isactive: 1, password: md5(wr_password)},
+				where: {id, h:req.query['h']}
+			});
+		}).then(()=>next());
+	}
+
+	app.post('/*', webRockAuth, webRockAuthAddSession);
+	app.get(/\/\d+\/h\=[a-fA-F0-9]{32,32}/, webRockAuthViaEmail, webRockAuth, webRockAuthAddSession);
+	app.all('/*', webRockLogout)
 
 	app.all('/*', (req, res, next)=>{
 		if (req.session && req.session.passport) {
