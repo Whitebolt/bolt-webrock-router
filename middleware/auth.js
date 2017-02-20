@@ -190,7 +190,7 @@ function init(app) {
 	}
 
 	function webRockAuthViaEmail(req, res, next) {
-		let id = parsInt(bolt.splitAndTrim(req.path, '/').shift(), 10);
+		let id = parseInt(bolt.splitAndTrim(req.path, '/').shift(), 10);
 		let email = '';
 
 		return db.query({
