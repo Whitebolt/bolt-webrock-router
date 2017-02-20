@@ -39,7 +39,9 @@ function init(app) {
 						isactive: 1
 					}
 				}
-			}).spread(rows=>(rows.length?rows[0]:Promise.reject()));
+			}).spread(
+				rows=>(rows.length ? cloneObject(rows[0]) : Promise.reject('User not found'))
+			);
 		},
 
 		getUserById: function(id) {
@@ -48,16 +50,9 @@ function init(app) {
 				type: 'select',
 				table: 'user',
 				where: {id}
-			}).spread(rows=>{
-				if (!rows.length) return Promise.reject('User not found');
-				return rows[0];
-			}).then(row=>{
-				let user = {};
-				Object.keys(row).forEach(fieldName=>{
-					user[fieldName] = row[fieldName];
-				});
-				return user;
-			});
+			}).spread(
+				rows=>(rows.length ? cloneObject(rows[0]) : Promise.reject('User not found'))
+			);
 		},
 
 		getUserByLoginHash: function(userId, hash) {
@@ -65,7 +60,9 @@ function init(app) {
 				type: 'select',
 				table: 'user',
 				where: {id:userId, h:hash}
-			}).spread(rows=>(rows.length?rows[0]:Promise.reject('User not found')));
+			}).spread(
+				rows=>(rows.length ? cloneObject(rows[0]) : Promise.reject('User not found'))
+			);
 		},
 
 		getLogRowBySessionId: function(sessionId) {
@@ -73,7 +70,7 @@ function init(app) {
 				type: 'select',
 				table: 'user_log',
 				where: {wr_bolt_hash: sessionId, logged_out: 0}
-			}).then(rows=>(rows.length?rows[0]:Promise.reject()));
+			}).spread(rows=>(rows.length ? rows[0] : Promise.reject()));
 		},
 
 		updateUserPassword: function(password, where) {
@@ -130,7 +127,7 @@ function init(app) {
 	};
 
 
-	function handleFailedLogin(username) {
+	function handleFailedLogin(req, username) {
 		return dbApi.logFailedLogin(getIp(req), username)
 			.then(()=>Promise.reject('User not found'));
 	}
@@ -139,9 +136,9 @@ function init(app) {
 		if (!db) return done(null, false);
 		dbApi.getUserByLogin(username, password).then(user=>{
 			bolt.fire("webRockLogin", username, getIp(req));
-			return done(null, cloneObject(user));
+			return done(null, user);
 		}, ()=>{
-			bolt.fire("webRockFailedLogin", username, ip);
+			bolt.fire("webRockFailedLogin", username, getIp(req));
 			return handleFailedLogin(req, username);
 		});
 	}
@@ -165,9 +162,8 @@ function init(app) {
 
 	function addToSessionTable(req) {
 		if (req && req.sessionID && req.session && req.session.passport && req.session.passport.user) {
-			return dbApi.getLogRowBySessionId(req.sessionID).then(logRow=>{
-				return dbApi.logNewSession(parseInt(req.session.passport.user, 10), getIp(req), req.sessionID);
-			});
+			return dbApi.getLogRowBySessionId(req.sessionID)
+				.catch(err=>dbApi.logNewSession(parseInt(req.session.passport.user, 10), getIp(req), req.sessionID));
 		}
 		return Promise.resolve();
 	}
@@ -189,7 +185,9 @@ function init(app) {
 		if (req.body && req.body.wr_username && req.body.wr_password) {
 			delete req.body.wr_username;
 			delete req.body.wr_password;
-			return addToSessionTable(req).then(()=>next());
+			return addToSessionTable(req).then(
+				()=>next(), err=> console.error('Failed on webRockAuthAddSession', err)
+			);
 		}
 		return next();
 	}
@@ -203,7 +201,7 @@ function init(app) {
 					let username = ((req && req.session && req.session.user) ? req.session.user.name : 'Unknown');
 					bolt.fire("webRockLogout", username, getIp(req));
 					return next();
-				});
+				}, err=> console.error('Failed on webRockLogout', err));
 			} else {
 				req.logout();
 				return next();
@@ -227,7 +225,7 @@ function init(app) {
 			req.method = 'post';
 
 			return dbApi.updateUserPassword(wr_password, {id, h});
-		}).then(()=>next());
+		}).then(()=>next(), err=> console.error('Failed on webRockAuthViaEmail1', err));
 	}
 
 	function webRockAuthViaEmail2(req, res, next) {
@@ -238,7 +236,7 @@ function init(app) {
 		return dbApi.updateUserPassword(null, {id, h}).then(()=>{
 			res.redirect('/members-home/password');
 			return next();
-		});
+		}, err=> console.error('Failed on webRockAuthViaEmail2', err));
 	}
 
 
