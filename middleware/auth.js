@@ -212,7 +212,7 @@ function init(app) {
 				type: 'update',
 				table: 'user',
 				updates: {isactive: 1, password: md5(wr_password)},
-				where: {id, h]}
+				where: {id, h}
 			});
 		}).then(()=>next());
 	}
