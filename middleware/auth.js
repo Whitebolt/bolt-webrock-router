@@ -77,7 +77,7 @@ function init(app) {
 			return db.query({
 				type: 'update',
 				table: 'user',
-				updates: {isactive: 1, password: md5(password)},
+				updates: {isactive: 1, password: ((password===null)?null:md5(password))},
 				where
 			});
 		},
@@ -185,8 +185,15 @@ function init(app) {
 		if (req.body && req.body.wr_username && req.body.wr_password) {
 			delete req.body.wr_username;
 			delete req.body.wr_password;
-			return addToSessionTable(req).then(
-				()=>next(), err=> console.error('Failed on webRockAuthAddSession', err)
+
+			return dbApi.getLogRowBySessionId(req.sessionID).then(
+				()=>dbApi.logExpiredSession(req.sessionID),
+				()=>true
+			).then(
+				()=>addToSessionTable(req)
+			).then(
+				()=>next(),
+				err=> console.error('Failed on webRockAuthAddSession', err)
 			);
 		}
 		return next();
