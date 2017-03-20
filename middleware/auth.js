@@ -5,7 +5,6 @@ const Strategy = module.parent.require('passport-local').Strategy;
 const Promise = module.parent.require('bluebird');
 const md5 = module.parent.require('md5');
 const session = module.parent.require('express-session');
-
 const WebRockError = require('../lib/errors').WebRockError;
 const WebRockDatabaseError = require('../lib/errors').WebRockDatabaseError;
 
@@ -38,7 +37,7 @@ function init(app) {
 	 * @returns {Promise<Object>}	Throws the promise with 'User not found'.
 	 */
 	function handleFailedLogin(req, username) {
-		return bolt.webrock.logFailedLogin(getIp(req), username)
+		return bolt.webrock.logFailedLogin(getIp(req), username, req)
 			.throw(new WebRockDatabaseError(`User not found in database for username: ${username}`));
 	}
 
@@ -59,8 +58,10 @@ function init(app) {
 			bolt.fire("webRockLogin", username, getIp(req));
 			return done(null, user);
 		}, ()=>{
-			bolt.fire("webRockFailedLogin", username, getIp(req));
 			return handleFailedLogin(req, username);
+		}).error(err=>{
+			bolt.fire("webRockFailedLogin", username, getIp(req));
+			return false;
 		});
 	}
 

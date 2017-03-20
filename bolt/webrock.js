@@ -1,6 +1,7 @@
 'use strict';
 
 const Promise = module.parent.require('bluebird');
+const md5 = module.parent.require('md5');
 const WebRockError = require('../lib/errors').WebRockError;
 const WebRockDatabaseError = require('../lib/errors').WebRockDatabaseError;
 
@@ -147,7 +148,7 @@ function updateUserPassword(password, where, db=_db) {
  * @returns {Promise<Object>}	Promise resolving when done or rejecting
  * 								if operation fails.
  */
-function logFailedLogin(ip, username, db=_db) {
+function logFailedLogin(ip, username, req, db=_db) {
 	return db.query({
 		type: 'insert',
 		table: 'user_log',
