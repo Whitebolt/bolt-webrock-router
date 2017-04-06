@@ -56,8 +56,7 @@ function getUserByLogin(username, clearTextPassword, db=_db) {
 	return _getUser({
 		$and: {
 			$or: {name:username, email:username},
-			password,
-			isactive: 1
+			password
 		}
 	}, db).spread(
 		rows=>(rows.length ? _cloneObject(rows[0]) : Promise.reject(new WebRockDatabaseError(`User not found in database for user: ${username} and password-hash: ${password}`)))
@@ -118,6 +117,22 @@ function getLogRowBySessionId(sessionId, db=_db) {
 		table: 'user_log',
 		where: {wr_bolt_hash: sessionId, logged_out: 0}
 	}).spread(rows=>(rows.length ? rows[0] : Promise.reject(new WebRockDatabaseError(`Log entry not found for session id: ${sessionId}`))));
+}
+
+/**
+ * Set the user to an active user
+ *
+ * @param {string} username		Username or password.
+ * @param {Object} db=_db		Database to use.
+ * @returns {Promise<Object>}
+ */
+function setUserActiveByLogin(username, db=_db) {
+	return db.query({
+		type: 'update',
+		table: 'user',
+		updates: {isactive: 1},
+		where: {$or: {name:username, email:username}}
+	});
 }
 
 /**
@@ -215,5 +230,7 @@ function setDb(db) {
 }
 
 module.exports = {webrock: {
-	getUserByLogin, getUserById, getUserByLoginHash, getLogRowBySessionId, updateUserPassword, logFailedLogin, logNewSession, logExpiredSession, setDb
+	getUserByLogin, getUserById, getUserByLoginHash, getLogRowBySessionId,
+	updateUserPassword, logFailedLogin, logNewSession, logExpiredSession,
+	setDb, setUserActiveByLogin
 }};

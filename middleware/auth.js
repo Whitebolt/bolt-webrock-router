@@ -55,12 +55,13 @@ function init(app) {
 	function login(req, username, cleartextPassword, done) {
 		if (!db) return done(null, false);
 		bolt.webrock.getUserByLogin(username, cleartextPassword).then(user=>{
-			bolt.fire("webRockLogin", username, getIp(req));
-			return done(null, user);
+			bolt.fire('webRockLogin', username, getIp(req));
+			bolt.webrock.setUserActiveByLogin(username);
+			return Promise.resolve(done(null, user));
 		}, ()=>{
 			return handleFailedLogin(req, username);
-		}).error(err=>{
-			bolt.fire("webRockFailedLogin", username, getIp(req));
+		}).catch(err=>{
+			bolt.fire('webRockFailedLogin', username, getIp(req));
 			return false;
 		});
 	}
@@ -198,7 +199,7 @@ function init(app) {
 				return bolt.webrock.logExpiredSession(req.sessionID).then(()=>{
 					req.logout();
 					username = ((req && req.session && req.session.user) ? req.session.user.name : 'Unknown');
-					bolt.fire("webRockLogout", username, getIp(req));
+					bolt.fire('webRockLogout', username, getIp(req));
 					return next();
 				}, err=>{
 					console.error('Failed on webRockLogout', err);
