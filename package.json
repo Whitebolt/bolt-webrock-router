@@ -27,8 +27,7 @@
     "url": "git@aaron.whitebolt:bolt/webrock.git"
   },
   "license": "SEE LICENSE IN LICENSE.md",
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "config": {
     "eventConsoleLogging": [
       {
