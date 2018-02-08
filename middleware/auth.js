@@ -2,6 +2,7 @@
 
 const passport = module.parent.require('passport');
 const Strategy = module.parent.require('passport-local').Strategy;
+const CustomStrategy = require('passport-custom');
 const Promise = module.parent.require('bluebird');
 const md5 = module.parent.require('md5');
 const session = module.parent.require('express-session');
@@ -24,6 +25,7 @@ function getWebRockDb(app) {
 }
 
 function init(app) {
+	// @annotation priority 3
 	const db = getWebRockDb(app);
 
 	bolt.webrock.setDb(db);
@@ -148,6 +150,23 @@ function init(app) {
 		return next();
 	}
 
+	function webRockAuthEmail(req, res, next) {
+		if ((req.body && req.body.wr_user_hash) || (req.query && req.query.wr_user_hash)) {
+			return passport.authenticate('webrockbyemail', {})(req, res, next);
+		}
+		return next();
+	}
+
+	function webRockAuthAddSessionEmail(req, res, next) {
+		if ((req.body && req.body.wr_user_hash) || (req.query && req.query.wr_user_hash)) {
+			let username = req.wr_username;
+			if (req.body && req.body.wr_user_hash) delete req.body.wr_user_hash;
+			if (req.query && req.query.wr_user_hash) delete req.query.wr_user_hash;
+			return _webRockAuthAddSession(req, res, next, username);
+		}
+		return next();
+	}
+
 	/**
 	 * Add session to session table,logging expired sessions and handling
 	 * express route.
@@ -165,20 +184,24 @@ function init(app) {
 			delete req.body.wr_username;
 			delete req.body.wr_password;
 
-			return bolt.webrock.getLogRowBySessionId(req.sessionID).then(
-				()=>bolt.webrock.logExpiredSession(req.sessionID),
-				()=>true
-			).then(
-				()=>addToSessionTable(req)
-			).then(
-				()=>next(),
-				err=>{
-					console.error('Failed on webRockAuthAddSession', err);
-					return new WebRockError(`Failed to create session for username: ${username}.`);
-				}
-			);
+			return _webRockAuthAddSession(req, res, next, username);
 		}
 		return next();
+	}
+
+	function _webRockAuthAddSession(req, res, next, username) {
+		return bolt.webrock.getLogRowBySessionId(req.sessionID).then(
+			()=>bolt.webrock.logExpiredSession(req.sessionID),
+			()=>true
+		).then(
+			()=>addToSessionTable(req)
+		).then(
+			()=>next(),
+			err=>{
+				console.error('Failed on webRockAuthAddSession', err);
+				return new WebRockError(`Failed to create session for username: ${username}.`);
+			}
+		);
 	}
 
 	/**
@@ -279,6 +302,33 @@ function init(app) {
 		passReqToCallback: true
 	}, login));
 
+	if (app.config.userHashSecret) {
+		passport.use('webrockbyemail', new CustomStrategy(async (req, done)=>{ // Email login for WebRock, not very secure but old anyway!
+			const values = Object.assign({}, req.query || {}, bolt.isObject(req.body)?req.body:{});
+			if (!db || !values.wr_user_hash) return done(null, false);
+			const [id, compareHash] = values.wr_user_hash.split('_');
+			const [rows] = (await db.query({
+				type: 'select',
+				columns: [{
+					type: 'md5',
+					expression: `concat(email,id,'${app.config.userHashSecret}')`, alias: 'hash'
+				}, '*'],
+				table: 'user',
+				where: {id}
+			}));
+			if (rows && rows.length) {
+				const {hash, name} = rows[0];
+				if (hash && (compareHash === hash)) {
+					bolt.emit('webRockLogin', name, getIp(req));
+					bolt.webrock.setUserActiveByLogin(name);
+					req.wr_username = name;
+					return done(null, rows[0]);
+				}
+			}
+			return handleFailedLogin(req, name);
+		}));
+	}
+
 	passport.serializeUser((data, callback)=>{
 		if (data.id) return callback(null, data.id.toString());
 		return callback(null, 0);
@@ -288,6 +338,8 @@ function init(app) {
 
 
 	app.post('/*', webRockAuth, webRockAuthAddSession);
+	app.post('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
+	app.get('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
 	app.get(/\/login\/\d+\/h\=[a-fA-F0-9]{32,32}/, webRockAuthViaEmail1, webRockAuth, webRockAuthAddSession, webRockAuthViaEmail2);
 	app.all('/*', webRockLogout)
 
@@ -307,5 +359,4 @@ function init(app) {
 
 }
 
-init.priority = 3;
 module.exports = init;
