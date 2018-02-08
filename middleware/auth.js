@@ -1,7 +1,6 @@
 'use strict';
 
 const passport = module.parent.require('passport');
-const Strategy = module.parent.require('passport-local').Strategy;
 const CustomStrategy = require('passport-custom');
 const Promise = module.parent.require('bluebird');
 const md5 = module.parent.require('md5');
@@ -25,7 +24,7 @@ function getWebRockDb(app) {
 }
 
 function init(app) {
-	// @annotation priority 3
+	// @annotation priority 5
 	const db = getWebRockDb(app);
 
 	bolt.webrock.setDb(db);
@@ -66,6 +65,29 @@ function init(app) {
 			bolt.emit('webRockFailedLogin', username, getIp(req));
 			return false;
 		});
+	}
+
+	async function loginViaEmail(req, id, compareHash, done) {
+		if (!db) return done(null, false);
+		const [users] = (await db.query({
+			type: 'select',
+			columns: [{
+				type: 'md5',
+				expression: `concat(email,id,'${app.config.userHashSecret}')`, alias: 'hash'
+			}, '*'],
+			table: 'user',
+			where: {id}
+		}));
+		if (users && users.length) {
+			const {hash, name} = users[0];
+			if (hash && (compareHash === hash)) {
+				bolt.emit('webRockLogin', name, getIp(req));
+				bolt.webrock.setUserActiveByLogin(name);
+				req.wr_username = name;
+				return done(null, users[0]);
+			}
+		}
+		return handleFailedLogin(req, name);
 	}
 
 	/**
@@ -145,7 +167,7 @@ function init(app) {
 	 */
 	function webRockAuth(req, res, next) {
 		if (req.body && req.body.wr_username && req.body.wr_password) {
-			return passport.authenticate('local', {})(req, res, next);
+			return passport.authenticate('standard', {})(req, res, next);
 		}
 		return next();
 	}
@@ -160,8 +182,8 @@ function init(app) {
 	function webRockAuthAddSessionEmail(req, res, next) {
 		if ((req.body && req.body.wr_user_hash) || (req.query && req.query.wr_user_hash)) {
 			let username = req.wr_username;
-			//if (req.body && req.body.wr_user_hash) delete req.body.wr_user_hash;
-			//if (req.query && req.query.wr_user_hash) delete req.query.wr_user_hash;
+			if (req.body && req.body.wr_user_hash) delete req.body.wr_user_hash;
+			if (req.query && req.query.wr_user_hash) delete req.query.wr_user_hash;
 			return _webRockAuthAddSession(req, res, next, username);
 		}
 		return next();
@@ -295,39 +317,11 @@ function init(app) {
 	app.use(passport.initialize());
 	app.use(passport.session());
 
-	passport.use(new Strategy({
-		usernameField: 'wr_username',
-		passwordField: 'wr_password',
-		session: true,
-		passReqToCallback: true
-	}, login));
-
-	if (app.config.userHashSecret) {
-		passport.use('webrockbyemail', new CustomStrategy(async (req, done)=>{ // Email login for WebRock, not very secure but old anyway!
-			const values = Object.assign({}, req.query || {}, bolt.isObject(req.body)?req.body:{});
-			if (!db || !values.wr_user_hash) return done(null, false);
-			const [id, compareHash] = values.wr_user_hash.split('_');
-			const [rows] = (await db.query({
-				type: 'select',
-				columns: [{
-					type: 'md5',
-					expression: `concat(email,id,'${app.config.userHashSecret}')`, alias: 'hash'
-				}, '*'],
-				table: 'user',
-				where: {id}
-			}));
-			if (rows && rows.length) {
-				const {hash, name} = rows[0];
-				if (hash && (compareHash === hash)) {
-					bolt.emit('webRockLogin', name, getIp(req));
-					bolt.webrock.setUserActiveByLogin(name);
-					req.wr_username = name;
-					return done(null, rows[0]);
-				}
-			}
-			return handleFailedLogin(req, name);
-		}));
-	}
+	passport.use('standard', new CustomStrategy(async (req, done)=>{
+		if (req.body && req.body.wr_username && req.body.wr_password) return login(
+			req, req.body.wr_username, req.body.wr_password, done
+		);
+	}));
 
 	passport.serializeUser((data, callback)=>{
 		if (data.id) return callback(null, data.id.toString());
@@ -339,11 +333,19 @@ function init(app) {
 
 	app.post('/*', webRockAuth, webRockAuthAddSession);
 	if (app.config.userHashSecret) {
+		// Email login for WebRock, not very secure but old anyway!
+		passport.use('webrockbyemail', new CustomStrategy(async (req, done)=>{
+			const values = Object.assign({}, req.query || {}, bolt.isObject(req.body)?req.body:{});
+			if (!values.wr_user_hash) return done(null, false);
+			const [id, compareHash] = values.wr_user_hash.split('_');
+			return loginViaEmail(req, id, compareHash, done);
+		}));
+
 		app.post('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
 		app.get('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
 	}
 	app.get(/\/login\/\d+\/h\=[a-fA-F0-9]{32,32}/, webRockAuthViaEmail1, webRockAuth, webRockAuthAddSession, webRockAuthViaEmail2);
-	app.all('/*', webRockLogout)
+	app.all('/*', webRockLogout);
 
 	app.all('/*', (req, res, next)=>{
 		if (req.session && req.session.passport) {
