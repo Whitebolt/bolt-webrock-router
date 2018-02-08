@@ -160,8 +160,8 @@ function init(app) {
 	function webRockAuthAddSessionEmail(req, res, next) {
 		if ((req.body && req.body.wr_user_hash) || (req.query && req.query.wr_user_hash)) {
 			let username = req.wr_username;
-			if (req.body && req.body.wr_user_hash) delete req.body.wr_user_hash;
-			if (req.query && req.query.wr_user_hash) delete req.query.wr_user_hash;
+			//if (req.body && req.body.wr_user_hash) delete req.body.wr_user_hash;
+			//if (req.query && req.query.wr_user_hash) delete req.query.wr_user_hash;
 			return _webRockAuthAddSession(req, res, next, username);
 		}
 		return next();
