@@ -338,8 +338,10 @@ function init(app) {
 
 
 	app.post('/*', webRockAuth, webRockAuthAddSession);
-	app.post('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
-	app.get('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
+	if (app.config.userHashSecret) {
+		app.post('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
+		app.get('/*', webRockAuthEmail, webRockAuthAddSessionEmail);
+	}
 	app.get(/\/login\/\d+\/h\=[a-fA-F0-9]{32,32}/, webRockAuthViaEmail1, webRockAuth, webRockAuthAddSession, webRockAuthViaEmail2);
 	app.all('/*', webRockLogout)
 
