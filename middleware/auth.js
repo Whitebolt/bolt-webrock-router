@@ -1,5 +1,6 @@
 'use strict';
 
+const util = require('util');
 const passport = module.parent.require('passport');
 const CustomStrategy = require('passport-custom');
 const Promise = module.parent.require('bluebird');
@@ -328,8 +329,7 @@ function init(app) {
 		return callback(null, 0);
 	});
 
-	passport.deserializeUser((id, callback)=>bolt.webrock.getUserById(id).nodeify(callback));
-
+	passport.deserializeUser((id, callback)=>bolt.webrock.getUserById(id).then(data=>callback(null, data), callback));
 
 	app.post('/*', webRockAuth, webRockAuthAddSession);
 	if (app.config.userHashSecret) {
@@ -351,7 +351,7 @@ function init(app) {
 		if (req.session && req.session.passport) {
 			const passport = req.session.passport;
 			let populator = (passport.user ? populateUserSessionData : populateAnnoymousSessionData);
-			populator(req.session).finally(next);
+			Promise.resolve(populator(req.session)).then(()=>next(),()=>next());
 		} else {
 			return next();
 		}

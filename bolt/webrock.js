@@ -49,17 +49,13 @@ function _getUser(where, db) {
  * @returns {Promise<Object>}			Promise resolving database row
  * 										or error 'User not found'.
  */
-function getUserByLogin(username, clearTextPassword, db=_db) {
+async function getUserByLogin(username, clearTextPassword, db=_db) {
 	let password = md5(clearTextPassword).toLowerCase();
 	if (!bolt.isString(username)) return Promise.reject(WebRockDatabaseError('Invalid username given to database query'));
-
-	return _getUser({
-		$and: {
-			$or: {name:username, email:username},
-			password
-		}
-	}, db).spread(
-		rows=>(rows.length ? _cloneObject(rows[0]) : Promise.reject(new WebRockDatabaseError(`User not found in database for user: ${username} and password-hash: ${password}`)))
+	const [rows] = await _getUser({$and: {$or: {name:username, email:username}, password}}, db);
+	return (rows.length ?
+		_cloneObject(rows[0]) :
+		Promise.reject(new WebRockDatabaseError(`User not found in database for user: ${username} and password-hash: ${password}`))
 	);
 }
 
@@ -73,12 +69,14 @@ function getUserByLogin(username, clearTextPassword, db=_db) {
  * @returns {Promise<Object>}	Promise resolving database row or error
  * 								'User not found'.
  */
-function getUserById(id, db=_db) {
+async function getUserById(id, db=_db) {
 	if (!bolt.isNumeric(id) && !bolt.isInteger(parseInt(id, 10))) return Promise.reject(new WebRockDatabaseError(`Invalid user id (${id}) given to database query`));
 
 	if (!id) return Promise.resolve({});
-	return _getUser({id}, db).spread(
-		rows=>(rows.length ? _cloneObject(rows[0]) : Promise.reject(new WebRockDatabaseError(`User not found in database for user id: ${id}`)))
+	const [rows] = await _getUser({id}, db);
+	return (rows.length ?
+		_cloneObject(rows[0]) :
+		Promise.reject(new WebRockDatabaseError(`User not found in database for user id: ${id}`))
 	);
 }
 
@@ -93,12 +91,14 @@ function getUserById(id, db=_db) {
  * @returns {Promise<Object>}	Promise resolving database row or error
  * 								'User not found'.
  */
-function getUserByLoginHash(id, loginHash, db=_db) {
+async function getUserByLoginHash(id, loginHash, db=_db) {
 	if (!bolt.isNumeric(id) && !bolt.isInteger(parseInt(id, 10))) return Promise.reject(new WebRockDatabaseError(`Invalid user id (${id}) given to database query`));
 	if (!bolt.isString(loginHash)) return Promise.reject(new WebRockDatabaseError(`Invalid session hash given to database query: ${loginHash}`));
 
-	return _getUser({id, h:loginHash}, db).spread(
-		rows=>(rows.length ? _cloneObject(rows[0]) : Promise.reject(new WebRockDatabaseError(`User not found in database for user id: ${id} and session hash: ${loginHash}`)))
+	const [rows] = await _getUser({id, h:loginHash}, db);
+	return (rows.length ?
+		_cloneObject(rows[0]) :
+		Promise.reject(new WebRockDatabaseError(`User not found in database for user id: ${id} and session hash: ${loginHash}`))
 	);
 }
 
@@ -111,12 +111,17 @@ function getUserByLoginHash(id, loginHash, db=_db) {
  * @returns {Promise<Object>}		Promise resolving database row or error
  * 									'Log entry not found'.
  */
-function getLogRowBySessionId(sessionId, db=_db) {
-	return db.query({
+async function getLogRowBySessionId(sessionId, db=_db) {
+	const [rows] = await db.query({
 		type: 'select',
 		table: 'user_log',
 		where: {wr_bolt_hash: sessionId, logged_out: 0}
-	}).spread(rows=>(rows.length ? rows[0] : Promise.reject(new WebRockDatabaseError(`Log entry not found for session id: ${sessionId}`))));
+	});
+
+	return (rows.length ?
+		_cloneObject(rows[0]) :
+		Promise.reject(new WebRockDatabaseError(`Log entry not found for session id: ${sessionId}`))
+	);
 }
 
 /**
