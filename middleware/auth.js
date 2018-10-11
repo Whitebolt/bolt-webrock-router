@@ -74,7 +74,7 @@ function init(app) {
 			type: 'select',
 			columns: [{
 				type: 'md5',
-				expression: `concat(email,id,'${app.config.userHashSecret}')`, alias: 'hash'
+				expression: `concat(email,id,'${app.locals.userHashSecret}')`, alias: 'hash'
 			}, '*'],
 			table: 'user',
 			where: {id}
@@ -332,7 +332,7 @@ function init(app) {
 	passport.deserializeUser((id, callback)=>bolt.webrock.getUserById(id).then(data=>callback(null, data), callback));
 
 	app.post('/*', webRockAuth, webRockAuthAddSession);
-	if (app.config.userHashSecret) {
+	if (app.locals.userHashSecret) {
 		// Email login for WebRock, not very secure but old anyway!
 		passport.use('webrockbyemail', new CustomStrategy(async (req, done)=>{
 			const values = Object.assign({}, req.query || {}, bolt.isObject(req.body)?req.body:{});
