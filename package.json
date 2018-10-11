@@ -38,39 +38,39 @@
         "event": "webRockProxy",
         "action": "webrock",
         "description": "proxy path",
-        "property": "<%= params[0] %>",
+        "property": "${params[0]}",
         "propertyColour": "yellow",
         "level": 4
       },
       {
         "event": "webRockReroute",
         "action": "webrock",
-        "description": "re-route <%= params[0] %> to",
-        "property": "<%= params[1] %>",
+        "description": "re-route ${params[0]} to",
+        "property": "${params[1]}",
         "propertyColour": "yellow",
         "level": 4
       },
       {
         "event": "webRockLogin",
         "action": "webrock",
-        "description": "login <%= params[0] %> at",
-        "property": "<%= params[1] %>",
+        "description": "login ${params[0]} at",
+        "property": "${params[1]}",
         "actionColour": "yellow",
         "level": 4
       },
       {
         "event": "webRockFailedLogin",
         "action": "webrock",
-        "description": "failed login for <%= params[0] %> at",
-        "property": "<%= params[1] %>",
+        "description": "failed login for ${params[0]} at",
+        "property": "${params[1]}",
         "actionColour": "red",
         "level": 4
       },
       {
         "event": "webRockLogout",
         "action": "webrock",
-        "description": "logout for <%= params[0] %> at",
-        "property": "<%= params[1] %>",
+        "description": "logout for ${params[0]} at",
+        "property": "${params[1]}",
         "actionColour": "yellow",
         "level": 4
       }
